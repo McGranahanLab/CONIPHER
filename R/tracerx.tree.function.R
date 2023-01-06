@@ -257,7 +257,6 @@ tracerx.tree.building <- function(sample_input_list
                                 , min_cluster_size = min_cluster_size
                                 , force_trunk = TRUE
                                 , ccf_buffer = ccf_buffer
-                                , branch_mode=FALSE
                                 , pval_cutoff = pval_cutoff
   )
 
