@@ -10,17 +10,12 @@ Description: CONIPHER is an R package for reconstruction of tumour phylogenetic
 Depends:
     R (>= 3.6.1)
 Imports:
-    mclust,
-    GenomicRanges,
-    Rsamtools,
     gplots,
-    gdata,
-    future,
     bootstrap,
-    TeachingDemos,
     igraph,
     mapplots,
-    beeswarm
+    beeswarm,
+    data.table
 Suggests:
     devtools
 License: XXX
