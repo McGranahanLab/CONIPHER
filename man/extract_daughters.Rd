@@ -2,15 +2,16 @@
 % Please edit documentation in R/tree.building.functions.R
 \name{extract_daughters}
 \alias{extract_daughters}
-\title{function to extract all daughter clones from a parent using a phylogenetic tree}
+\title{Function to extract all daughter clones from a parent using a phylogenetic tree}
 \usage{
 extract_daughters(tree, parent.clones)
 }
 \arguments{
-\item{tree}{a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)}
+\item{tree}{A phylogenetic tree matrix with two columns specifying
+'parent' (column 1) and child (column 2)}
 
-\item{parent.clones}{the name of the parent clone(s) for which you wish to find all daughters}
+\item{parent.clones}{The name of the parent clone(s) for which you wish to find all daughters}
 }
 \description{
-function to extract all daughter clones from a parent using a phylogenetic tree
+Function to extract all daughter clones from a parent using a phylogenetic tree
 }
