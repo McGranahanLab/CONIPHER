@@ -3091,7 +3091,6 @@ compute_tree_edge_probability <- function(tree_list
                                           , edgelength
                                           , trunk)
 {
-  print(packageVersion('data.table'))
   n_alt_trees <- length(tree_list)
   clusters_in_tree <- unique(as.numeric(tree_list[[1]]))
 
