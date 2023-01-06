@@ -354,7 +354,7 @@ tracerx.tree.building <- function(sample_input_list
   # 2) Compute edge probability for each alternative tree + find trees with highest edge probability:
 
   cat('\n\nComputing edge probability score for each alternative tree\n')
-  graph_pyclone$alt_trees_edge_probability <- compute_tree_edge_probability(tree_list = graph_pyclone$alt_trees, edgelength = graph_pyclone$edgelength)
+  graph_pyclone$alt_trees_edge_probability <- compute_tree_edge_probability(tree_list = graph_pyclone$alt_trees, edgelength = graph_pyclone$edgelength, trunk = trunk_cluster)
   graph_pyclone$max_edge_probability_trees <- names(which(graph_pyclone$alt_trees_edge_probability == max(graph_pyclone$alt_trees_edge_probability)))
   cat('\nTrees with maximum edge probability: ', graph_pyclone$max_edge_probability_trees, '\n')
 
