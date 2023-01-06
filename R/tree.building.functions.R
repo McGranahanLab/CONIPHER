@@ -3117,9 +3117,6 @@ compute_tree_edge_probability <- function(tree_list
                                      allow.cartesian = T)
   alt_trees_edges <- data.table::as.data.table(alt_trees_edges)
 
-  print(class(alt_trees_edges))
-  print(package_version('data.table'))
-
   # extract edge level metrics
   alt_trees_edges[, edge_count := .N, by = c('parent_node', 'node')] # number of alternative trees edge is in
   alt_trees_edges[, edge_prevalence := edge_count/n_alt_trees] # fraction of alternative trees edge is in
