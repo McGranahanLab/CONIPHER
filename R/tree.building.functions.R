@@ -3091,11 +3091,12 @@ compute_tree_edge_probability <- function(tree_list
                                           , edgelength
                                           , trunk)
 {
+  require(data.table)
   n_alt_trees <- length(tree_list)
   clusters_in_tree <- unique(as.numeric(tree_list[[1]]))
 
   # Create a data table of all edges from all alternative trees
-  alt_trees_edges = rbindlist(lapply(seq(tree_list), function(i){
+  alt_trees_edges = data.table::rbindlist(lapply(seq(tree_list), function(i){
     tree = as.data.table(tree_list[[i]])
     colnames(tree) = c('parent_node', 'node')
     tree$tree_name = i
