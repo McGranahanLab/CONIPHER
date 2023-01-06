@@ -148,13 +148,11 @@ correct.clonality.nesting <- function(nestedlist
 #' @param min_cluster_size Threshold for minimum number of mutations required in
 #' a mutation cluster
 #' @param ccf_buffer PhyloCCF buffer permitted when checking tree level issue
-
 grow.trees <- function(nestedlist
                        , pyclone
                        , min_cluster_size = 5
                        , ccf_buffer =10
                        , force_trunk = TRUE
-                       , pval_cutoff=0.01
                        , skip_size  =20
 )
 {
@@ -630,8 +628,12 @@ clonality.function <- function(pyclone
 
 }
 
-
-createAllPathsList <- function(tree.structure, trunk){
+#' Function to create a list of all tree paths
+#' @param pyclone An R matrix describing the tree structure with two columns
+#' specifying 'parent' (column 1) and child (column 2)
+#' @returns An R list of all tree paths from trunk to leaves
+createAllPathsList <- function(tree.structure, trunk)
+{
   tree.structure <- as.data.frame(tree.structure, stringsAsFactors = F)
   colnames(tree.structure) <- c("V1", "V2")
   leaves <- tree.structure$V2[!tree.structure$V2%in%tree.structure$V1]
@@ -653,8 +655,8 @@ createAllPathsList <- function(tree.structure, trunk){
   return(all.paths)
 }
 
-tree.structure.adjust.clonality <- function(tree.structure, trunk, clonality.called.cluster.region.df){
-
+tree.structure.adjust.clonality <- function(tree.structure, trunk, clonality.called.cluster.region.df)
+{
   allpaths <- createAllPathsList(tree.structure, trunk)
   allpaths <- unlist(allpaths)
   allpaths <- strsplit(allpaths, split = ",")
@@ -889,6 +891,15 @@ correct.clonality.table <- function(clonality_table,graph_pyclone,trunk_cluster)
   return(out)
 }
 
+#' Function to determine all possible alternative phylogenies
+#'
+#' @param nestedlist An R list containing information about the nesting
+#' structure of mutation clusters in each region.
+#' @param graph_pyclone An R list containing information about the tree structure
+#' @param pyclone An R list containing information about mutation PhyloCCF
+#' @param ccf_buffer PhyloCCF buffer permitted when checking tree level issue
+#' @returns An R list containing all possible alternative tree structures and
+#' information about which branches are consensus across multiple trees
 grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
 {
   suppressWarnings(require(gtools))
@@ -1254,7 +1265,14 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
 
 
 # cleaning functions ####
-merge.clusters.full   <- function(test_pyclone,test_pyclone_absolute,nested_pyclone,nested_pyclone_absolute,min_ccf=0.05,p_value_cut=0.01,min_cluster_size=5,use_boot)
+merge.clusters.full   <- function(test_pyclone
+                                  , test_pyclone_absolute
+                                  , nested_pyclone
+                                  , nested_pyclone_absolute
+                                  , min_ccf=0.05
+                                  , p_value_cut=0.01
+                                  , min_cluster_size=5
+                                  , use_boot)
 {
 
   merge_clusters_phylo    <- merge.clusters(nested_pyclone = nested_pyclone,pyclone = test_pyclone,min_ccf = min_ccf)
@@ -1352,7 +1370,12 @@ merge.clusters.full   <- function(test_pyclone,test_pyclone_absolute,nested_pycl
 
 }
 
-prep_pyclone_tree.fn <- function(graph_pyclone, nested_pyclone, correct_tree = NULL, merge_cluster = NULL, sampleid = substr(colnames(nested_pyclone$ccf_cluster_table)[1], 1, 8)) {
+prep_pyclone_tree.fn <- function(graph_pyclone
+                                 , nested_pyclone
+                                 , correct_tree = NULL
+                                 , merge_cluster = NULL
+                                 , sampleid = substr(colnames(nested_pyclone$ccf_cluster_table)[1], 1, 8))
+{
   auto_edgelength <- graph_pyclone$edgelength
   trunk <- graph_pyclone$trunk
   auto_mean_pyclone_ccf <- nested_pyclone$ccf_cluster_table
@@ -1423,7 +1446,12 @@ clean.noisy.clusters  <- function(pyclone,max.absent.prop=0.05,min_ccf=0.05)
 
 }
 
-remove_clustered_clones <- function( test.pyclone, clonal_cluster, p_value_cut = 0.01, clustering_estimate_cut = 2 ){
+#' Function to remove mutation clusters with genomically clustered mutations
+remove_clustered_clones <- function(test.pyclone
+                                    , clonal_cluster
+                                    , p_value_cut = 0.01
+                                    , clustering_estimate_cut = 2 )
+{
 
   # determine the clones
   clones <- unique( test.pyclone[, "PycloneCluster" ] )
@@ -1452,10 +1480,11 @@ remove_clustered_clones <- function( test.pyclone, clonal_cluster, p_value_cut =
 
 }
 
+#' Function to determine the distribution of location of mutations within a cluster
 clusterDistributionAcrossGenome <- function(cluster
-                                            ,clonal_cluster
-                                            ,test.pyclone
-                                            ,iterations =10000
+                                            , clonal_cluster
+                                            , test.pyclone
+                                            , iterations =10000
 )
 {
 
@@ -1524,7 +1553,10 @@ update.nested.cluster <- function(nestedclust,ccf_ci_lower,max_per_level,trunk_c
   return(new_nestedclust)
 }
 
-prune.tree <- function(edgelist,nestedclust){
+#' Function to prune the ancestral graph
+prune.tree <- function(edgelist
+                       , nestedclust)
+{
 
   # attempts to remove cycles, if allowed.
   edgelist_new <- edgelist
@@ -1754,7 +1786,8 @@ get.direct.descendent <- function(cluster,edgeList)
   return(edgeList[edgeList[,1]==cluster,2])
 }
 
-unfold_tree <- function(edgelist, lower, trunk) {
+unfold_tree <- function(edgelist, lower, trunk)
+{
   tree_levels <- check.levels.ccf(edgelist, lower, trunk)[[2]]
   tree_values <- unlist(tree_levels)
   for (i in 1:length(tree_levels)) {
@@ -1800,7 +1833,8 @@ unfold_tree <- function(edgelist, lower, trunk) {
   return(list(edgelist, cause_cicles))
 }
 
-check.levels.ccf <- function(tree, lower, trunk) {
+check.levels.ccf <- function(tree, lower, trunk)
+{
 
   #Identify tree levels
 
@@ -1931,6 +1965,7 @@ prune.cycle <- function(egdgelist,nestedclust,ccf_ci_lower,max_per_level,trunk_c
   return(output)
 }
 
+#' Function to check whether there is a CCF level issue
 is.there.ccf.issue <- function(nestedclust
                                ,directed_input_graph
                                ,ccf_ci_lower
@@ -1995,6 +2030,9 @@ is.there.ccf.issue <- function(nestedclust
 }
 
 
+#' Function to test which clusters are best to remove from tree
+#' This function permutes through clusters and checks which are the best to remove
+#' from the tree - takes into account number of mutations
 permute.clusters.to.remove <- function(test_out
                                        ,nestedclust
                                        ,max_per_level
@@ -2314,7 +2352,8 @@ check.internally.consistent <- function(tree_small,tree_full,trunk)
   return(cluster_out)
 }
 
-prune.tree.old  <- function(edgelist) {
+prune.tree.old  <- function(edgelist)
+{
   edgelist_new <- edgelist
   rownames(edgelist_new) <- rownames(edgelist) <- 1:nrow(edgelist_new)
   trunk_node <- unique(edgelist[, 1][!edgelist[, 1] %in% edgelist[, 2]])
@@ -2411,21 +2450,24 @@ check.nesting    <- function (tree.to.test,strict_nestedclust,trunk_cluster)
   }
 }
 
-# to do with nesting #####
-#' Function to determine PhyloCCF table
+
+#' Function to compute confidence intervals of each cluster in each region
 #'
-#' This function takes in returns the average PhyloCCF of each mutation cluster in each
-#' tumour region, confidence intervals for each mutation cluster, of the
-#' PhyloCCF distributions of the mutations in that cluster. If
-#' use_boot==TRUE, then confidence intervals are computed using bootstrapping.
-#' The function then performs a statistical test (Wilcoxon) for every pair of
-#' clusters to determine whether one cluster can be nested within another.
+#' This function takes in an R list containing mutation PhyloCCF in each region,
+#' and mutation assignments to a cluster and computes bootstrapped
+#' confidence intervals.
 #' @param pyclone An R list object containing information about the PhyloCCF
 #' of each mutation in each tumour region.
-#' @returns 'nestedlist', an R list containing information about the nesting
-#' structure of mutation clusters in each region. Elements of the list include:
-#' 'nestedclust',  'ccf_ci_lower', 'ccf_ci_upper', 'ccf_cluster_table', 'cluster_qc'.
-calc.pyclone.ci <- function(pyclone, pyclust, nclusters, prefix = "LTX", lower_min = 0) {
+#' @returns An R list containing elements: 'ccf_cluster_table', 'mean_phylo_ccf',
+#' 'median_pyclone_ccf', 'median_phylo_ccf', 'ccf_ci_upper', 'ccf_ci_lower',
+#' 'ccf_ci_boot_upper', 'ccf_ci_boot_lower'
+
+calc.pyclone.ci <- function(pyclone
+                            , pyclust
+                            , nclusters
+                            , prefix = "LTX"
+                            , lower_min = 0)
+{
   tmp <- colnames(pyclone)[grepl(prefix, colnames(pyclone))]
   phyloCCF <- tmp[grepl('PhyloCCF$', tmp)]
   pycloneCCF <- tmp[grepl('PycloneCCF$', tmp)]
@@ -2545,7 +2587,10 @@ calc.pyclone.ci <- function(pyclone, pyclust, nclusters, prefix = "LTX", lower_m
 #' list is a nesting matrix for one tumour region, that describes whether a
 #' cluster A (row) can be nested within a cluster B (column).
 
-test.distributions <- function(pyclone, nclusters, pval_cutoff = 0.05) {
+test.distributions <- function(pyclone
+                               , nclusters
+                               , pval_cutoff = 0.05)
+{
   # Use a statistical test to test for nesting.
   # Done in each region separately, then looking across all regions to create the final nesting matrix
   # Given that if we use phyloCCF can be greater than 1, let's treat as not significantly greater if it's already greater than 0.99
@@ -2634,8 +2679,9 @@ test.distributions <- function(pyclone, nclusters, pval_cutoff = 0.05) {
 
 test.distributions.with.clonality.table <- function(pyclone
                                                     , nclusters
-                                                    ,clonality_table
-                                                    , pval_cutoff = 0.05) {
+                                                    , clonality_table
+                                                    , pval_cutoff = 0.05)
+{
   # Use a statistical test to test for nesting.
   # Done in each region separately, then looking across all regions to create the final nesting matrix
   # Given that if we use phyloCCF can be greater than 1, let's treat as not significantly greater if it's already greater than 0.99
@@ -2735,7 +2781,9 @@ test.distributions.with.clonality.table <- function(pyclone
 }
 
 
-verify.nesting     <- function(nested_clust, pyclone_ci) {
+verify.nesting <- function(nested_clust
+                               , pyclone_ci)
+{
   #This function will test that the nesting derived from significance testing makes sense when very low frequency clusters are ignored
   nested_clust_original <- nested_clust
   for (i in colnames(nested_clust)) {
@@ -2762,7 +2810,10 @@ verify.nesting     <- function(nested_clust, pyclone_ci) {
   return(nested_clust)
 }
 
-identify.issue.clusters <- function(distributions, pyclone_ci, pval_cutoff = 0.025) {
+identify.issue.clusters <- function(distributions
+                                    , pyclone_ci
+                                    , pval_cutoff = 0.025)
+{
   #Identify clusters that are incompatible (one larger, then smaller than the other).
 
   outmat <- matrix(0, 0, 2)
@@ -2785,7 +2836,10 @@ identify.issue.clusters <- function(distributions, pyclone_ci, pval_cutoff = 0.0
   return(outmat)
 }
 
-merge.clusters         <- function(nested_pyclone,pyclone,min_ccf=0.05,p_value_cut=0.01)
+merge.clusters <- function(nested_pyclone
+                           , pyclone
+                           , min_ccf = 0.05
+                           , p_value_cut = 0.01)
 {
   potential.merge <- c()
   for (i in 1:(ncol(nested_pyclone$nestedclust)-1))
@@ -2851,7 +2905,8 @@ merge.clusters         <- function(nested_pyclone,pyclone,min_ccf=0.05,p_value_c
 }
 
 # additional functions ####
-PasteVector <- function(v,sep=""){
+PasteVector <- function(v,sep="")
+{
 
   vt <- v[1];
   if(length(v) > 1){
@@ -2868,7 +2923,8 @@ PasteVector <- function(v,sep=""){
   return(out.v);
 }
 
-trx_rename.fn <- function(trxid, trialID = 'LTX') {
+trx_rename.fn <- function(trxid, trialID = 'LTX')
+{
   new_trxid <- as.character(trxid)
   #Includes hospital id?
   hospital <- grepl('\\w_', substr(trxid[1], 1, 2))
@@ -2882,7 +2938,12 @@ trx_rename.fn <- function(trxid, trialID = 'LTX') {
 
 
 # plotting functions ####
-color.tree <- function(edgelength, opacity = 255) {
+
+#' Plotting function to colour the nodes on the phylogenetic tree
+#'
+#' @param edgelength A named vector containing number of mutations of each cluster
+color.tree <- function(edgelength, opacity = 255)
+{
   suppressPackageStartupMessages(require(RColorBrewer))
   ncols <- length(edgelength)
   max.cols <- 12
@@ -2896,13 +2957,14 @@ color.tree <- function(edgelength, opacity = 255) {
 }
 
 
-#' function to extract all daughter clones from a parent using a phylogenetic tree
+#' Function to extract all daughter clones from a parent using a phylogenetic tree
 #'
-#' @param parent.clones the name of the parent clone(s) for which you wish to find all daughters
-#'
-#' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
-#'
-extract_daughters <- function( tree, parent.clones ){
+#' @param tree A phylogenetic tree matrix with two columns specifying
+#' 'parent' (column 1) and child (column 2)
+#' @param parent.clones The name of the parent clone(s) for which you wish to find all daughters
+extract_daughters <- function(tree
+                              , parent.clones)
+{
 
   daughters <- tree[ tree[,1] %in% parent.clones, 2]
   repeat{
@@ -2915,8 +2977,10 @@ extract_daughters <- function( tree, parent.clones ){
 
 }
 
-# Function to take a list of trees and identify the consensus relationships
-extract_consensus_relationships <- function( tree_list, output_as_table = FALSE ){
+#' Function to take a list of trees and identify the consensus relationships
+extract_consensus_relationships <- function(tree_list
+                                            , output_as_table = FALSE )
+{
 
   parent_clones <- lapply( tree_list, function( tree ) unique( tree[, 1] ) )
 
@@ -2958,8 +3022,20 @@ extract_consensus_relationships <- function( tree_list, output_as_table = FALSE 
 }
 
 
-# Function to take a list of trees and ccf cluster table and compute sum condition error
-compute_sum_condition_error <- function(tree_list, ccf_cluster_table, trunk){
+#' Function to compute the Sum Condition Error for a list of trees
+#'
+#' This function takes a list of phylogenetic tree structures and the PhyloCCF cluster table and
+#' computes the sum condition error for each tree.
+#' @param tree_list A list of tree matrices
+#' @param ccf_cluster_table A matrix of mean PhyloCCF of each cluster in
+#' each tumour region
+#' @param trunk The name of the truncal cluster
+#' @returns sce_vec, A named vector of the sum condition error (SCE) for each
+#' tree structure in the input tree list
+compute_sum_condition_error <- function(tree_list
+                                        , ccf_cluster_table
+                                        , trunk)
+{
 
   sce_list <- lapply(1:length(tree_list), function(tree_i){
 
@@ -2999,8 +3075,21 @@ compute_sum_condition_error <- function(tree_list, ccf_cluster_table, trunk){
   return(sce_vec)
 }
 
+
+#' Function to compute the edge probability score for a list of trees
+#'
+#' This function takes a list of phylogenetic tree structures and the PhyloCCF cluster table and
+#' computes the sum condition error for each tree.
+#' @param tree_list A list of tree matrices
+#' @param edgelength A named vector containing number of mutations of each cluster
+#' @param trunk The name of the truncal cluster
+#' @returns sce_vec, A named vector of the sum condition error (SCE) for each
+#' tree structure in the input tree list
 # Function to take a list of trees and edge lengths and edge probabilities
-compute_tree_edge_probability <- function(tree_list, edgelength, trunk){
+compute_tree_edge_probability <- function(tree_list
+                                          , edgelength
+                                          , trunk)
+{
   require(data.table)
 
   n_alt_trees <- length(tree_list)
@@ -3043,8 +3132,13 @@ compute_tree_edge_probability <- function(tree_list, edgelength, trunk){
   return(edge_probability_score)
 }
 
-# Function to get tree level of a cluster
-get_tree_level <- function(tree_graph, cluster){
+
+#' Function to compute the tree level of a cluster
+#' @param tree_graph A matrix of a tree structure
+#' @param cluster Name of a cluster for which you want to get the tree level
+get_tree_level <- function(tree_graph
+                           , cluster)
+{
   # trunk has level 1
   if (length(unique(as.numeric(tree_graph))) == 1){
     return(1)
@@ -3073,11 +3167,24 @@ get_tree_level <- function(tree_graph, cluster){
 }
 
 
-
-#' Function to compute clone proportions on a selected alternative tree
-#'
-#' @param
-compute_subclone_proportions <- function(tree_list, ccf_cluster_table, clonality_table, trunk, force_clonal_100=TRUE, tree_id=1){
+#' Function to compute clone proportions on a selected alternative tree structure
+#' @param tree_list A list of tree matrices
+#' @param ccf_cluster_table A matrix of mean PhyloCCF of each cluster in
+#' each tumour region
+#' @param clonality_table A matrix of clonality calls for each cluster in
+#' each tumour region
+#' @param trunk The name of the truncal cluster
+#' @param force_clonal_100 A logical indicating whether to for clusters that are
+#' 'clonal' in a region to have CCF==100
+#' @param tree_id The tree index of the selected alternative tree for which you
+#' want to compute the clone proportions
+compute_subclone_proportions <- function(tree_list
+                                         , ccf_cluster_table
+                                         , clonality_table
+                                         , trunk
+                                         , force_clonal_100 = TRUE
+                                         , tree_id = 1)
+{
   require(data.table)
   options(stringsAsFactors = F)
 
