@@ -3087,6 +3087,7 @@ compute_sum_condition_error <- function(tree_list
 #' @returns sce_vec, A named vector of the sum condition error (SCE) for each
 #' tree structure in the input tree list
 #' @import data.table
+#' @importFrom data.table ":="
 compute_tree_edge_probability <- function(tree_list
                                           , edgelength
                                           , trunk)
