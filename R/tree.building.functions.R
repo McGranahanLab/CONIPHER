@@ -3091,7 +3091,7 @@ compute_tree_edge_probability <- function(tree_list
                                           , edgelength
                                           , trunk)
 {
-  library(data.table)
+  require(data.table)
   n_alt_trees <- length(tree_list)
   clusters_in_tree <- unique(as.numeric(tree_list[[1]]))
 
@@ -3104,18 +3104,22 @@ compute_tree_edge_probability <- function(tree_list
   }))
 
   # get edge lengths
-  edgelength = data.frame(edgelength)
-  colnames(edgelength) = c('node', 'edgelength')
-  edgelength = edgelength[edgelength$node %in% clusters_in_tree, , drop = F]
+  edgelength <- data.frame(edgelength)
+  colnames(edgelength) <- c('node', 'edgelength')
+  edgelength <- edgelength[edgelength$node %in% clusters_in_tree, , drop = F]
 
   # merge edge lengths with all alternative tree edges
-  alt_trees_edges = merge.data.table(alt_trees_edges,
+  alt_trees_edges <- data.table::merge.data.table(alt_trees_edges,
                                      edgelength,
                                      by = 'node',
                                      all.x = T,
                                      all.y = F, # note: this makes sure we remove the row for the trunk node
                                      allow.cartesian = T)
-  alt_trees_edges <- as.data.table(alt_trees_edges)
+  alt_trees_edges <- data.table::as.data.table(alt_trees_edges)
+
+  print(class(alt_trees_edges))
+  print(package_version('data.table'))
+
   # extract edge level metrics
   alt_trees_edges[, edge_count := .N, by = c('parent_node', 'node')] # number of alternative trees edge is in
   alt_trees_edges[, edge_prevalence := edge_count/n_alt_trees] # fraction of alternative trees edge is in
