@@ -32,6 +32,7 @@
 #' (default=TRUE)
 #' @returns sample_pyclone_tree, an R list object containing output information
 #' from CONIPHER tree building
+#' @export tracerx.tree.building
 
 tracerx.tree.building <- function(sample_input_list
                                   , ccf_buffer =10
@@ -408,6 +409,8 @@ tracerx.tree.building <- function(sample_input_list
 #' This function is the CONIPHER function to plot the inferred phylogenetic tree.
 #' @param sample_pyclone_tree A list containing all information about the
 #' tree inferred using function tracerx.tree.building()
+#' @export tree.plotting.function
+
 tree.plotting.function <- function(sample_pyclone_tree)
 {
   require(mapplots)
