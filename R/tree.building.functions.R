@@ -3091,7 +3091,6 @@ compute_tree_edge_probability <- function(tree_list
                                           , edgelength
                                           , trunk)
 {
-  require(data.table)
   print(packageVersion('data.table'))
   n_alt_trees <- length(tree_list)
   clusters_in_tree <- unique(as.numeric(tree_list[[1]]))
@@ -3186,7 +3185,6 @@ compute_subclone_proportions <- function(tree_list
                                          , force_clonal_100 = TRUE
                                          , tree_id = 1)
 {
-  require(data.table)
   options(stringsAsFactors = F)
 
   tree <- tree_list[[tree_id]]
