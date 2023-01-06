@@ -3105,9 +3105,9 @@ compute_tree_edge_probability <- function(tree_list
   }))
 
   # get edge lengths
-  edgelength = data.table(edgelength)
+  edgelength = data.frame(edgelength)
   colnames(edgelength) = c('node', 'edgelength')
-  edgelength = edgelength[node %in% clusters_in_tree]
+  edgelength = edgelength[edgelength$node %in% clusters_in_tree, , drop = F]
 
   # merge edge lengths with all alternative tree edges
   alt_trees_edges = merge.data.table(alt_trees_edges,
