@@ -136,6 +136,7 @@ correct.clonality.nesting <- function(nestedlist
 
 }
 
+
 #' Function to determine default tree structure
 #'
 #' This function takes as input an R list containing information about

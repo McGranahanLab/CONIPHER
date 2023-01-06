@@ -403,6 +403,12 @@ tracerx.tree.building <- function(sample_input_list
   return(output_list)
 }
 
+
+#' TRACERx tree plotting function
+#'
+#' This function is the CONIPHER function to plot the inferred phylogenetic tree.
+#' @param sample_pyclone_tree A list containing all information about the
+#' tree inferred using function tracerx.tree.building()
 tree.plotting.function <- function(sample_pyclone_tree)
 {
   require(mapplots)
