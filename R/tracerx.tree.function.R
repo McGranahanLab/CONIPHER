@@ -349,14 +349,14 @@ tracerx.tree.building <- function(sample_input_list
   cat('\n\nComputing sum condition error for each alternative tree')
   graph_pyclone$alt_trees_sum_condition_error <- compute_sum_condition_error(tree_list = graph_pyclone$alt_trees, ccf_cluster_table = nested_pyclone$ccf_cluster_table, trunk = trunk_cluster)
   graph_pyclone$min_sce_trees <- names(which(graph_pyclone$alt_trees_sum_condition_error == min(graph_pyclone$alt_trees_sum_condition_error)))
-  cat('\nTrees with minimum sum condition error: ', graph_pyclone$min_sce_trees)
+  cat('\nTrees with minimum sum condition error: ', graph_pyclone$min_sce_trees, '\n')
 
   # 2) Compute edge probability for each alternative tree + find trees with highest edge probability:
 
   cat('\n\nComputing edge probability score for each alternative tree\n')
   graph_pyclone$alt_trees_edge_probability <- compute_tree_edge_probability(tree_list = graph_pyclone$alt_trees, edgelength = graph_pyclone$edgelength)
   graph_pyclone$max_edge_probability_trees <- names(which(graph_pyclone$alt_trees_edge_probability == max(graph_pyclone$alt_trees_edge_probability)))
-  cat('\nTrees with maximum edge probability: ', graph_pyclone$max_edge_probability_trees)
+  cat('\nTrees with maximum edge probability: ', graph_pyclone$max_edge_probability_trees, '\n')
 
 
   ### Compute clone proportions output:
