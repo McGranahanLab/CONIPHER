@@ -1,6 +1,216 @@
 ################################################################################
-######################### Main tree building function ##########################
+##################               MAIN FUNCTIONS               ##################
 ################################################################################
+
+#' Input data preprocessing function
+#'
+#' This function takes the input tsv and formats the data to be compatible with
+#' the main CONIPHER tree building function. NOTE: it is assumed that
+#' clustering has been carried out prior to running tree building.
+#' @param input_table An dataframe of the input mutation table in the correct
+#' format. For more information on the input table format, please see our
+#' tree building protocol.
+#' @param prefix A tumour case and sample prefix, e.g. 'CRUK'.
+#' @param out_dir A file path to the desired output directory
+#' @export tracerx.preprocess
+
+tracerx.preprocess <- function(input_table, prefix, out_dir)
+{
+  # check if the correct columns are included
+  required_cols <- c("CASE_ID", "SAMPLE", "CHR", "POS", "REF", "ALT", "CLUSTER", "CCF_PHYLO", "CCF_OBS", "MUT_COPY", "COPY_NUMBER_A", "COPY_NUMBER_B")
+  if (FALSE%in% (required_cols %in% colnames(input_table)))
+  {
+    print('\nThe following columns are required in input_tsv:\n')
+    cat(required_cols)
+    stop()
+  }
+
+  # add mutation id column
+  input_table$mutation_id <- paste(input_table$CASE_ID,
+                                   input_table$CHR,
+                                   input_table$POS,
+                                   input_table$REF,
+                                   input_table$ALT,
+                                   sep=":")
+
+  nr_unique_muts           <- length(unique(input_table$mutation_id))
+  nr_regions               <- length(unique(input_table$SAMPLE))
+  regions                  <- unique(input_table$SAMPLE)
+
+  # Raise an error if prefix is not specified, or incorrectly specified
+  if (is.null(prefix)){
+    stop("No prefix specified. Please indicate a prefix for the current tumour case.")
+  } else if (!grepl(prefix, input_table$CASE_ID[1])){
+    stop("Incorrect prefix specified. Please input the correct prefix for the current tumour case.")
+  }
+
+  if(!'CLUSTER'%in%colnames(input_table$CASE_ID[1]))
+  {
+    if('originalCLUSTER'%in%colnames(input_table))
+    {
+      colnames(input_table) <- gsub("originalCLUSTER","CLUSTER",colnames(input_table))
+    }
+  }
+
+  # make sure all mutations have a cluster assigned
+  tmp <- input_table[!is.na(input_table$CLUSTER),]
+  removed_mutations <- c()
+  for (mutation_id in unique(input_table$mutation_id))
+  {
+    if(length(unique(tmp[tmp$mutation_id%in%mutation_id,]$CLUSTER))==0)
+    {
+      # warning
+      removed_mutations <- c(removed_mutations,mutation_id)
+      cat('\nwarning:')
+      cat('', paste(mutation_id),'does not have a CLUSTER assigned, will remove')
+      next;
+    }
+
+    input_table[input_table$mutation_id%in%mutation_id,]$CLUSTER <- unique(tmp[tmp$mutation_id%in%mutation_id,]$CLUSTER)
+  }
+
+  if(length(removed_mutations)>=1)
+  {
+    cat(paste('\nwarning: ',length(removed_mutations), ' mutations removed due to lack of cluster assignment',sep=""))
+  }
+
+  input_table <- input_table[!is.na(input_table$CLUSTER),,drop=FALSE]
+
+  # check again:
+  nr_unique_muts           <- length(unique(input_table$mutation_id))
+  nr_regions               <- length(unique(input_table$SAMPLE))
+  regions                  <- unique(input_table$SAMPLE)
+
+
+  # Next convert the input_table into a sample_input_list
+  input_list <- list()
+  names_input_list <- c("pyclone",
+                        "pyclone_absolute",
+                        "sampleID",
+                        "dirName",
+                        "pycloneType",
+                        "prefix",
+                        "releaseDir",
+                        "saveDir",
+                        "generalSave",
+                        "correct_subclonality",
+                        "mutTable",
+                        "merged_clusters")
+
+  #create the pyclone table
+  input_format           <- data.frame(matrix(data = NA,
+                                              nrow = nr_unique_muts,
+                                              ncol = 11*nr_regions+2),
+                                       stringsAsFactors = FALSE)
+  colnames(input_format)  <- c(paste(regions, "_cov", sep = "")
+                               ,paste(regions, "_var_count", sep = "")
+                               ,paste(regions, "_VAF", sep = "")
+                               ,paste(regions,"_PhyloCCF",sep="")
+                               ,paste(regions,"_PycloneCCF",sep="")
+                               ,paste(regions,"_Pyclone_0.05",sep="")
+                               ,paste(regions,"_Pyclone_0.95",sep="")
+                               ,paste(regions,"_cpn.copies",sep="")
+                               ,paste(regions,"_mut.cpn.num",sep="")
+                               ,paste(regions,"_nAraw",sep="")
+                               ,paste(regions,"_nBraw",sep="")
+                               ,"PycloneCluster"
+                               ,"CleanCluster")
+  rownames(input_format) <- unique(input_table$mutation_id)
+  # next populate the table
+  for (mutation_id in rownames(input_format))
+  {
+    spec_mut_table <- input_table[input_table$mutation_id%in%mutation_id,,drop=FALSE]
+    for (i in 1:nrow(spec_mut_table))
+    {
+      region_spec_mut <- spec_mut_table[i,,drop=FALSE]
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_cov',sep="")] <- region_spec_mut$DEPTH
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_var_count',sep="")] <- region_spec_mut$VAR_COUNT
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_VAF',sep="")] <- region_spec_mut$VAR_COUNT / region_spec_mut$DEPTH
+
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_PhyloCCF',sep="")] <- region_spec_mut$CCF_PHYLO
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_PycloneCCF',sep="")] <- region_spec_mut$CCF_PHYLO
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_Pyclone_0.05',sep="")] <- region_spec_mut$CCF_PHYLO
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_Pyclone_0.95',sep="")] <- region_spec_mut$CCF_PHYLO
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_cpn.copies',sep="")] <- 1
+
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_mut.cpn.num',sep="")] <- region_spec_mut$MUT_COPY
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_nAraw',sep="")] <- region_spec_mut$COPY_NUMBER_A
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_nBraw',sep="")] <- region_spec_mut$COPY_NUMBER_B
+      input_format[mutation_id,"PycloneCluster"] <- region_spec_mut$CLUSTER
+      input_format[mutation_id,"CleanCluster"]  <- 1
+    }
+  }
+
+  # Do the same thing for pyclone_absolute (non-subclonal-copy-number-corrected version)
+  #create the pyclone table
+  input_format_absolute           <- data.frame(matrix(data = NA,
+                                                       nrow = nr_unique_muts,
+                                                       ncol = 11*nr_regions+2),
+                                                stringsAsFactors = FALSE)
+  colnames(input_format_absolute)  <- c(paste(regions, "_cov", sep = "")
+                                        ,paste(regions, "_var_count", sep = "")
+                                        ,paste(regions, "_VAF", sep = "")
+                                        ,paste(regions,"_PhyloCCF",sep="")
+                                        ,paste(regions,"_PycloneCCF",sep="")
+                                        ,paste(regions,"_Pyclone_0.05",sep="")
+                                        ,paste(regions,"_Pyclone_0.95",sep="")
+                                        ,paste(regions,"_cpn.copies",sep="")
+                                        ,paste(regions,"_mut.cpn.num",sep="")
+                                        ,paste(regions,"_nAraw",sep="")
+                                        ,paste(regions,"_nBraw",sep="")
+                                        ,"PycloneCluster"
+                                        ,"CleanCluster")
+  rownames(input_format_absolute) <- unique(input_table$mutation_id)
+  # next populate the table
+  for (mutation_id in rownames(input_format_absolute))
+  {
+    spec_mut_table <- input_table[input_table$mutation_id%in%mutation_id,,drop=FALSE]
+
+    for (i in 1:nrow(spec_mut_table))
+    {
+      region_spec_mut <- spec_mut_table[i,,drop=FALSE]
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_cov',sep="")] <- region_spec_mut$DEPTH
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_var_count',sep="")] <- region_spec_mut$VAR_COUNT
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_VAF',sep="")] <- region_spec_mut$VAR_COUNT / region_spec_mut$DEPTH
+
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_PhyloCCF',sep="")] <- region_spec_mut$CCF_OBS
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_PycloneCCF',sep="")] <- region_spec_mut$CCF_OBS
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_Pyclone_0.05',sep="")] <- region_spec_mut$CCF_OBS
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_Pyclone_0.95',sep="")] <- region_spec_mut$CCF_OBS
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_cpn.copies',sep="")] <- 1
+
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_mut.cpn.num',sep="")] <- region_spec_mut$MUT_COPY
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_nAraw',sep="")] <- region_spec_mut$COPY_NUMBER_A
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_nBraw',sep="")] <- region_spec_mut$COPY_NUMBER_B
+      input_format_absolute[mutation_id,"PycloneCluster"] <- region_spec_mut$CLUSTER
+      input_format_absolute[mutation_id,"CleanCluster"]  <- 1
+
+    }
+
+  }
+
+  # Now create list object for input to treebuilding
+  input_list$pyclone          <- input_format
+  input_list$pyclone_absolute <- input_format_absolute
+  input_list$sampleID         <- input_table$CASE_ID[1]
+  input_list$dirName          <- NA
+  input_list$pycloneType      <- NA
+  input_list$prefix           <- prefix
+  input_list$releaseDir       <- NA
+  input_list$saveDir          <- out_dir
+  input_list$generalSave      <- out_dir
+  input_list$correct_subclonality <- TRUE
+  input_list$mutTable           <- NA
+  input_list$merged_clusters   <- NA
+
+  if(!file.exists(input_list$generalSave))
+  {
+    dir.create(input_list$generalSave,showWarnings = TRUE, recursive = TRUE, mode = "0775")
+  }
+
+  return(input_list)
+}
+
 
 #' TRACERx tree building function
 #'
@@ -71,7 +281,7 @@ tracerx.tree.building <- function(sample_input_list
   input_parameter_list$adjust_noisy_clusters         <- adjust_noisy_clusters
   input_parameter_list$adjust_noisy_clusters_prop    <- adjust_noisy_clusters_prop
   input_parameter_list$min_ccf                       <- min_ccf
-  input_parameter_list$min_cluster_size                       <- min_cluster_size
+  input_parameter_list$min_cluster_size              <- min_cluster_size
 
   #
   cat('\nFollowing parameters used for tree building:\n')
