@@ -1,5 +1,5 @@
 ################################################################################
-######################## Tree building helper functions ########################
+#################               HELPER FUNCTIONS               #################
 ################################################################################
 
 #' Function to determine cluster nesting structure.
@@ -143,6 +143,8 @@ correct.clonality.nesting <- function(nestedlist
 #' PhyloCCF of each mutation (pyclone) and an R list containing a cluster ccf table
 #' and nesting matrix (nestedlist), and returns an R list containing the default tree
 #' structure.
+#' @param nestedlist An R list containing information about the nesting
+#' structure of mutation clusters in each region.
 #' @param pyclone An R list object containing information about the PhyloCCF
 #' of each mutation in each tumour region.
 #' @param prefix A character string indicating the sample and tumour case prefix

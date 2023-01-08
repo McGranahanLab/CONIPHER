@@ -12,9 +12,9 @@
 #' tree building protocol.
 #' @param prefix A tumour case and sample prefix, e.g. 'CRUK'.
 #' @param out_dir A file path to the desired output directory
-#' @export tracerx.preprocess
+#' @export treebuilding_preprocess
 
-tracerx.preprocess <- function(input_table, prefix, out_dir)
+treebuilding_preprocess <- function(input_table, prefix, out_dir)
 {
   # check if the correct columns are included
   required_cols <- c("CASE_ID", "SAMPLE", "CHR", "POS", "REF", "ALT", "CLUSTER", "CCF_PHYLO", "CCF_OBS", "MUT_COPY", "COPY_NUMBER_A", "COPY_NUMBER_B")
@@ -242,9 +242,9 @@ tracerx.preprocess <- function(input_table, prefix, out_dir)
 #' (default=TRUE)
 #' @returns sample_pyclone_tree, an R list object containing output information
 #' from CONIPHER tree building
-#' @export tracerx.tree.building
+#' @export treebuilding_run
 
-tracerx.tree.building <- function(sample_input_list
+treebuilding_run <- function(sample_input_list
                                   , ccf_buffer =10
                                   , pval_cutoff =0.01
                                   , use_boot =TRUE
@@ -619,9 +619,9 @@ tracerx.tree.building <- function(sample_input_list
 #' This function is the CONIPHER function to plot the inferred phylogenetic tree.
 #' @param sample_pyclone_tree A list containing all information about the
 #' tree inferred using function tracerx.tree.building()
-#' @export tree.plotting.function
+#' @export treebuilding_plot
 
-tree.plotting.function <- function(sample_pyclone_tree)
+treebuilding_plot <- function(sample_pyclone_tree)
 {
   require(mapplots)
   sampleID  <-  sample_pyclone_tree$parameters$sampleID
