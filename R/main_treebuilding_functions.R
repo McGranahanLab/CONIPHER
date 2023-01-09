@@ -498,7 +498,7 @@ treebuilding_run <- function(sample_input_list
                                         , min_cluster_size = max(c(2, min_cluster_size))
                                         ,pval_cutoff = pval_cutoff
                                         ,use_boot = use_boot )
-  cat('\correcting clonality table\n')
+
   clonality_out   <- correct.clonality.table(clonality_table = clonality_table
                                              , graph_pyclone = graph_pyclone
                                              , trunk_cluster = graph_pyclone$trunk) #TODO still may need correcting for one region cases #EC 20210509
