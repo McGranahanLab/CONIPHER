@@ -629,7 +629,8 @@ treebuilding_run <- function(sample_input_list
   output_list$clone_proportion_out                   <- clone_proportion_out
 
   #let's save the output_list
-  saveRDS(output_list,file=paste(generalSave,sampleID,".tree.RDS",sep = ""))
+  output_rds <- file.path(generalSave, paste(sampleID, ".tree.RDS", sep = ""))
+  saveRDS(output_list, file = output_rds)
 
   return(output_list)
 }
