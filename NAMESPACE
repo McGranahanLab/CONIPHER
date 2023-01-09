@@ -3,7 +3,7 @@
 export(treebuilding_plot)
 export(treebuilding_preprocess)
 export(treebuilding_run)
-import(data.table)
+import(plyr)
 importFrom(RColorBrewer,"brewer.pal")
 importFrom(boot,"boot")
 importFrom(boot,"boot.ci")
