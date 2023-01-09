@@ -582,7 +582,7 @@ tree.structure.adjust.clonality <- function(tree.structure, trunk, clonality.cal
   tree.structure <- as.data.frame(tree.structure, stringsAsFactors = F)
   colnames(tree.structure) <- c("V1", "V2")
   error <- NULL
-  if (class(clonality.called.cluster.region.df) != "factor") {
+  if (any(class(clonality.called.cluster.region.df) != "factor")) {
     regions <- colnames(clonality.called.cluster.region.df)
     for(i in 1:length(regions)){
       clusters.in.region <- rownames(clonality.called.cluster.region.df)[clonality.called.cluster.region.df[,i]%in%c("clonal", "subclonal")]
@@ -1776,11 +1776,11 @@ check.levels.ccf <- function(tree, lower, trunk)
   }
 
   lower[lower > 100] <- 100
-  if (class(lower) != "numeric") {
+  if (any(class(lower) != "numeric")) {
     level_ccf <- matrix(NA, nrow = length(tlevels), ncol = ncol(lower))
   } else {level_ccf <- matrix(NA, nrow = length(tlevels), ncol = 1)}
   for (i in 1:nrow(level_ccf)) {
-    if (class(lower) != "numeric") {
+    if (any(class(lower) != "numeric")) {
       level_ccf[i, ] <- colSums(lower[rownames(lower) %in% tlevels[[i]],, drop = F])
     } else {level_ccf[i,1] <- lower[names(lower) %in% tlevels[[i]], drop = F]
     }}
