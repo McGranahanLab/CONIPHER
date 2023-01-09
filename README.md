@@ -5,7 +5,7 @@
 
 This is the official github repository for the R package to perform tumour phylogenetic tree building using CONIPHER. For full details of the method, please refer to our manuscript and protocol XXX. For details on how to run mutation clustering and phylogenetic tree builing consecutively with one wrapper script, please refer to the github repository at https://github.com/FrancisCrickInstitute/TRACERx-clustering-treeBuilding. 
 
-
+---
 #### CONIPHER installation and run instructions
 Step 1. To install and be able to run CONIPHER tree building, start R and install the 'CONIPHER' R package from this github repository using the following command:
 
@@ -41,7 +41,7 @@ treebuilding_plot(tree_output_list)
 ```
 
 
-
+---
 (might need to load in conda env - check this)
 ```
 conda create -n pyclone -c bioconda -c conda-forge pyclone r-base=3.6.1 r-essentials r-tidyverse r-cowplot r-ggpubr r-fst r-biocmanager r-devtools r-seqminer
