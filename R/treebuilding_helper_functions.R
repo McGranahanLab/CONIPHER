@@ -189,7 +189,7 @@ grow.trees <- function(nestedlist
   # you have more than 1 cluster, proceed.
   #create directed graph
   directedGraph_input_full <- matrix(0, 0, 2)
-  if (class(nestedclust) != "numeric") {
+  if (any(class(nestedclust) != "numeric")) {
     colsums <- colSums(nestedclust)
     rowsums <- rowSums(nestedclust)
     trunk_cluster <- names(colsums[which(colsums == max(colsums))])
@@ -201,7 +201,7 @@ grow.trees <- function(nestedlist
     trunk_cluster <- names(sort(rowMeans(ccf_cluster_table[trunk_cluster,, drop = F]), decreasing = T))[1]
   }
 
-  if (class(nestedclust)!="numeric"){
+  if (any(class(nestedclust)!="numeric")){
     if (!all(nestedclust[!rownames(nestedclust) %in% trunk_cluster, trunk_cluster] == 1)) {
       tmp <- rownames(nestedclust[!rownames(nestedclust) %in% trunk_cluster, ])[!nestedclust[!rownames(nestedclust) %in% trunk_cluster, trunk_cluster] == 1]
       #If any here, check if they are included in the trunk
@@ -229,7 +229,7 @@ grow.trees <- function(nestedlist
   nclusters     <- table(pyclone[, pyclust])
 
 
-  if (class(ccf_ci_upper)!="numeric"){
+  if (any(class(ccf_ci_upper)!="numeric")){
     max_per_level <- max(max(ccf_ci_upper[trunk_cluster,]) + ccf_buffer, 100+ccf_buffer)
   } else {
     max_per_level <- max(max(ccf_ci_upper[trunk_cluster]) + ccf_buffer, 100+ccf_buffer)
@@ -239,7 +239,7 @@ grow.trees <- function(nestedlist
   pyclust <- ncol(pyclone)
   nclusters <- table(pyclone[, pyclust])
 
-  if (class(nestedclust) !="numeric"){
+  if (any(class(nestedclust) !="numeric")){
     for (i in colnames(nestedclust)) {
       tmp <- cbind(i, rownames(nestedclust)[nestedclust[, i] == 1])
       if (ncol(tmp) == 2) {
@@ -254,7 +254,7 @@ grow.trees <- function(nestedlist
 
   #Remove multiple incoming edges to same node
   directedGraph_input        <- directedGraph_input_full
-  if(class(nestedclust)!="numeric"){
+  if(any(class(nestedclust)!="numeric")){
     directedGraph_input_pruned <- prune.tree_test(edgelist_full = directedGraph_input,nestedclust = nestedclust,trunk_cluster = trunk_cluster)
   } else { directedGraph_input_pruned <- directedGraph_input}
   plot(graph.data.frame(directedGraph_input_pruned),layout=layout.reingold.tilford(graph.data.frame(directedGraph_input_pruned), root=trunk_cluster) )
@@ -272,7 +272,7 @@ grow.trees <- function(nestedlist
 
   # is there a level issue (CCF>100%+buffer) in a region
   directedGraph_input_corrected <- directedGraph_input_pruned#unfold_tree(directedGraph_input_corrected, lower, trunk_cluster)[[1]]
-  if (class(ccf_ci_lower) != "numeric") {
+  if (any(class(ccf_ci_lower) != "numeric")) {
     lower                         <- ccf_ci_lower[rownames(ccf_ci_lower) %in% unique(c(directedGraph_input_corrected)),, drop = F]
   } else if (length(unique(directedGraph_input[1,]))==1) {
     ccf_ci_lower <- t(as.matrix(ccf_ci_lower))
@@ -452,7 +452,7 @@ grow.trees <- function(nestedlist
   outlist <- list(directedGraph_input_pruned_unfolded, original_tree, c(clusters_to_remove), tlevels, nclusters, trunk_cluster)
   names(outlist) <- c('Corrected_tree', 'Original_tree', 'Clusters_with_issues', 'ccf_per_level', 'edgelength', 'trunk')
 
-  if (class(ccf_cluster_table) != "numeric") {
+  if (any(class(ccf_cluster_table) != "numeric")) {
     if (nrow(ccf_cluster_table) == 1) {
       outlist <- list(Corrected_tree = matrix(as.character(c(1, 1)), ncol = 2, byrow = T), 'Original_tree' = matrix(as.character(c(1, 1)), ncol = 2, byrow = T), 'Clusters_with_issues' = NA, 'ccf_per_level' = NA, 'edgelength' = setNames(cluster_qc[1, 1], rownames(ccf_cluster_table)[1]), 'trunk' = rownames(ccf_cluster_table)[1])
     }}
@@ -819,6 +819,7 @@ correct.clonality.table <- function(clonality_table,graph_pyclone,trunk_cluster)
 grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
 {
   suppressWarnings(require(gtools))
+  suppressWarnings(require(igraph))
   nestedclust       <- nestedlist[[1]]
   ccf_ci_lower      <- nestedlist[[2]]
   ccf_ci_upper      <- nestedlist[[3]]
