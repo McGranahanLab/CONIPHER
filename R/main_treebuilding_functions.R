@@ -102,14 +102,8 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
   names_input_list <- c("pyclone",
                         "pyclone_absolute",
                         "sampleID",
-                        # "dirName",
-                        # "pycloneType",
                         "prefix",
-                        # "releaseDir",
-                        "saveDir",
                         "generalSave",
-                        # "correct_subclonality",
-                        # "mutTable",
                         "merged_clusters")
 
   #create the pyclone table
@@ -208,14 +202,8 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
   input_list$pyclone          <- input_format
   input_list$pyclone_absolute <- input_format_absolute
   input_list$sampleID         <- input_table$CASE_ID[1]
-  # input_list$dirName          <- NA
-  # input_list$pycloneType      <- NA
   input_list$prefix           <- prefix
-  # input_list$releaseDir       <- NA
-  input_list$saveDir          <- out_dir
   input_list$generalSave      <- out_dir
-  # input_list$correct_subclonality <- TRUE
-  # input_list$mutTable           <- NA
   input_list$merged_clusters   <- NA
 
   if(!file.exists(input_list$generalSave))
@@ -280,14 +268,8 @@ treebuilding_run <- function(sample_input_list
   #first keep track of parameters used for this
   input_parameter_list <- list()
   input_parameter_list$sampleID                      <- sampleID               <- sample_input_list$sampleID
-  # input_parameter_list$dirName                       <- dirName                <- sample_input_list$dirName
-  # input_parameter_list$pycloneType                   <- pycloneType            <- sample_input_list$pycloneType
   input_parameter_list$prefix                        <- prefix                 <- sample_input_list$prefix
-  # input_parameter_list$releaseDir                    <- releaseDir             <- sample_input_list$releaseDir
-  input_parameter_list$saveDir                       <- saveDir                <- sample_input_list$saveDir
   input_parameter_list$generalSave                   <- generalSave            <- sample_input_list$generalSave
-  # input_parameter_list$correct_subclonality          <- correct_subclonality   <- sample_input_list$correct_subclonality
-  # input_parameter_list$mutTable                      <- mutTable               <- sample_input_list$mutTable
   input_parameter_list$ccf_buffer                    <- ccf_buffer
   input_parameter_list$pval_cutoff                   <- pval_cutoff
   input_parameter_list$use_boot                      <- use_boot
@@ -652,11 +634,7 @@ treebuilding_plot <- function(sample_pyclone_tree)
   cat('\n Plotting inferred phylogenetic tree \n')
   require(mapplots)
   sampleID  <-  sample_pyclone_tree$parameters$sampleID
-  # dirName <- sample_pyclone_tree$parameters$dirName
-  # pycloneType <- sample_pyclone_tree$parameters$pycloneType
   prefix <- sample_pyclone_tree$parameters$prefix
-  # releaseDir <- sample_pyclone_tree$parameters$releaseDir
-  saveDir <- sample_pyclone_tree$parameters$saveDir
   generalSave <- sample_pyclone_tree$parameters$generalSave
   ccf_buffer <- sample_pyclone_tree$parameters$ccf_buffer
   pval_cutoff <- sample_pyclone_tree$parameters$pval_cutoff
