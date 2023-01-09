@@ -18,7 +18,7 @@ library(CONIPHER)
 
 **Step 2.** Specify your input data. To run CONIPHER treebuilding successfully, we require an input table, a sample and tumour case prefix and a desired output directory. For example:
 ```
-input_table <- read.delim2('path_to_your_input_table_here.tsv', stringsAsFactors = FALSE)
+input_table <- read.delim2('toy_tsv.tsv', stringsAsFactors = FALSE)
 prefix <- 'CRUK'
 out_dir <- 'path_to_your_output_dir_here'
 ```
