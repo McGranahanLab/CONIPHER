@@ -16,6 +16,7 @@
 
 treebuilding_preprocess <- function(input_table, prefix, out_dir)
 {
+  cat('\n Preprocessing input data \n')
   # check if the correct columns are included
   required_cols <- c("CASE_ID", "SAMPLE", "CHR", "POS", "REF", "ALT", "CLUSTER", "CCF_PHYLO", "CCF_OBS", "MUT_COPY", "COPY_NUMBER_A", "COPY_NUMBER_B")
   if (FALSE%in% (required_cols %in% colnames(input_table)))
@@ -647,6 +648,7 @@ treebuilding_run <- function(sample_input_list
 
 treebuilding_plot <- function(sample_pyclone_tree)
 {
+  cat('\n Plotting inferred phylogenetic tree \n')
   require(mapplots)
   sampleID  <-  sample_pyclone_tree$parameters$sampleID
   dirName <- sample_pyclone_tree$parameters$dirName
