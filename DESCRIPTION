@@ -15,7 +15,13 @@ Imports:
     igraph,
     mapplots,
     beeswarm,
-    data.table
+    data.table,
+    boot,
+    RColorBrewer,
+    grDevices,
+    graphics,
+    stats,
+    utils
 Suggests:
     devtools
 License: XXX

@@ -366,9 +366,12 @@ treebuilding_run <- function(sample_input_list
 
 
   nested_pyclone  <- correct.clonality.nesting(nestedlist = nested_pyclone
-                                               ,pyclone = test_pyclone
-                                               ,clonality_table = clonality_table
-                                               ,pval_cutoff = pval_cutoff
+                                               , pyclone = test_pyclone
+                                               , clonality_table = clonality_table
+                                               , pval_cutoff = pval_cutoff
+                                               , min_cluster_size = min_cluster_size
+                                               , min_ccf = min_ccf
+                                               , prefix = prefix
   )
   # finish additional step NM [05/04/2022]
   cat('\nThe following nesting identified:\n')
@@ -619,6 +622,10 @@ treebuilding_run <- function(sample_input_list
 #' This function is the CONIPHER function to plot the inferred phylogenetic tree.
 #' @param sample_pyclone_tree A list containing all information about the
 #' tree inferred using function tracerx.tree.building()
+#' @importFrom grDevices "colorRampPalette" "dev.off" "pdf"
+#' @importFrom graphics "abline" "axis" "barplot" "layout" "legend"
+#' "par" "plot.new" "segments" "text" "title"
+#' @importFrom igraph "get.edgelist"
 #' @export treebuilding_plot
 
 treebuilding_plot <- function(sample_pyclone_tree)

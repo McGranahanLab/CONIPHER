@@ -85,9 +85,14 @@ determine.cluster.nesting <- function( pyclone
 
 #' Function to correct nesting based on cluster clonality
 correct.clonality.nesting <- function(nestedlist
-                                      ,pyclone
-                                      ,clonality_table
-                                      ,pval_cutoff =0.01)
+                                      , pyclone
+                                      , clonality_table
+                                      , pval_cutoff = 0.01
+                                      , min_cluster_size = 5
+                                      , use_boot = TRUE
+                                      , min_ccf = 0.05
+                                      , prefix = prefix
+)
 {
   suppressWarnings(require(boot))
   # To implement: Check for CCF per row does not go beyond the number of cells
@@ -150,6 +155,7 @@ correct.clonality.nesting <- function(nestedlist
 #' @param prefix A character string indicating the sample and tumour case prefix
 #' @param min_cluster_size Threshold for minimum number of mutations required in
 #' a mutation cluster
+#' @importFrom stats "setNames"
 #' @param ccf_buffer PhyloCCF buffer permitted when checking tree level issue
 grow.trees <- function(nestedlist
                        , pyclone
@@ -295,7 +301,7 @@ grow.trees <- function(nestedlist
 
 
       #first, assess whether this can be simply explained by less strict clustering
-      test_cycle  <- prune.cycle(egdgelist = directedGraph_input_corrected
+      test_cycle  <- prune.cycle(edgelist = directedGraph_input_corrected
                                  ,nestedclust = nestedclust
                                  ,ccf_ci_lower = ccf_ci_lower
                                  ,max_per_level = max_per_level
@@ -457,100 +463,6 @@ grow.trees <- function(nestedlist
 }
 
 
-# this function is unfinished and doesn't work - but highlights need to check which clusters are removed and why.
-check.why.cluster.excluded <- function(nestedlist,max_per_level,trunk_cluster,tree_removed_clusters)
-{
-
-  expressionsoptions <- options()[["expressions"]]
-  options(expressions=1e5)
-  suppressPackageStartupMessages(require(gtools))
-  suppressPackageStartupMessages(require(igraph))
-
-  nestedclust      <- nestedlist[[1]]
-  ccf_ci_lower     <- nestedlist[[2]]
-  ccf_ci_upper     <- nestedlist[[3]]
-  ccf_cluster_table <- nestedlist[[4]]
-  cluster_qc       <- nestedlist[[5]]
-
-  # you have more than 1 cluster, proceed.
-  #create directed graph
-  directedGraph_input_full <- matrix(0, 0, 2)
-  colsums <- colSums(nestedclust)
-  rowsums <- rowSums(nestedclust)
-  trunk_cluster <- names(colsums[which(colsums == max(colsums))])
-  if (length(trunk_cluster) > 1) {
-    trunk_cluster <- names(sort(rowMeans(ccf_cluster_table[trunk_cluster,, drop = F]), decreasing = T))[1]
-  }
-  #Check that all clusters are decended from the trunk, and ensure that the trunk does not descend from any
-  nestedclust[trunk_cluster, ] <- 0
-  if (!all(nestedclust[!rownames(nestedclust) %in% trunk_cluster, trunk_cluster] == 1)) {
-    tmp <- rownames(nestedclust[!rownames(nestedclust) %in% trunk_cluster, ])[!nestedclust[!rownames(nestedclust) %in% trunk_cluster, trunk_cluster] == 1]
-    #If any here, check if they are included in the trunk
-    if (length(tmp) > 0) {
-      for (i in 1:length(tmp)) {
-        if (all(ccf_ci_upper[trunk_cluster, ] >= ccf_ci_lower[tmp[i], ])) {
-          nestedclust[tmp[i], trunk_cluster] <- 1
-        }
-      }
-    }
-    tmp <- rownames(nestedclust[!rownames(nestedclust) %in% trunk_cluster, ])[!nestedclust[!rownames(nestedclust) %in% trunk_cluster, trunk_cluster] == 1]
-    #If any remains
-    if (length(tmp) > 0) {
-      warning(paste('Cluster(s) ', tmp, ' is not descended from the trunk!!'))
-      cluster_qc[tmp, 'NotDescendFromTrunk'] <- 1
-      if(force_trunk) {
-        nestedclust[!rownames(nestedclust) %in% trunk_cluster, trunk_cluster] <- 1
-      }
-    }
-  }
-
-  #create new nesting based on trunk.
-  pyclust       <- ncol(pyclone)
-  nclusters     <- table(pyclone[, pyclust])
-  max_per_level <- max(ccf_ci_upper[trunk_cluster,])+ccf_buffer
-
-  for (i in colnames(nestedclust)) {
-    tmp <- cbind(i, rownames(nestedclust)[nestedclust[, i] == 1])
-    if (ncol(tmp) == 2) {
-      directedGraph_input_full <- rbind(directedGraph_input_full, tmp)
-    }
-  }
-
-  #Remove multiple incoming edges to same node
-  directedGraph_input        <- directedGraph_input_full
-  directedGraph_input_pruned <- prune.tree_test(edgelist_full = directedGraph_input,
-                                                nestedclust = nestedclust,
-                                                trunk_cluster = trunk_cluster)
-
-
-  ccf.test                   <- is.there.ccf.issue(nestedclust = nestedclust,
-                                                   directed_input_graph = directedGraph_input_pruned,
-                                                   ccf_ci_lower = ccf_ci_lower,
-                                                   trunk_cluster = trunk_cluster,
-                                                   clusters_to_remove = c(),
-                                                   clusters_to_use = clusters.in.use.test,
-                                                   max_per_level = max_per_level)
-
-  nestedclust_to_use <- update.nested.cluster(nestedclust,ccf_ci_lower = ccf_ci_lower,max_per_level = max(ccf_ci_upper[trunk_cluster,]),trunk_cluster)
-
-  plot(graph.data.frame(directedGraph_input_pruned),layout=layout.reingold.tilford(graph.data.frame(directedGraph_input_pruned), root=trunk_cluster) )
-  directedGraph_input_pruned_unfolded <- directedGraph_input_pruned
-
-
-  for(tree_removed_cluster in tree_removed_clusters)
-  {
-    descendents_of_cluster <- names(nestedclust_to_use[,tree_removed_cluster][nestedclust_to_use[,tree_removed_cluster]==1])
-    parents_of_cluster     <- names(nestedclust_to_use[tree_removed_cluster,][nestedclust_to_use[tree_removed_cluster,]==1])
-
-    #check which descendents have other parents
-    parent_clash <- c()
-    for (descendent_of_cluster in descendents_of_cluster)
-    {
-
-    }
-  }
-}
-
 
 #' Function to determine cluster clonality in each tumour region
 #'
@@ -574,6 +486,7 @@ check.why.cluster.excluded <- function(nestedlist,max_per_level,trunk_cluster,tr
 #' for each mutation cluster
 #' @returns a matrix of dimensions (n_clusters x n_regions) classifying each
 #' cluster as 'clonal', 'subclonal', or 'absent' in each tumour region.
+#' @importFrom boot "boot"
 clonality.function <- function(pyclone
                                , trunk
                                , ccf_buffer=10
@@ -1009,7 +922,9 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
 
 
       rownames(new.tree) <- 1:nrow(new.tree)
-      new.tree            <- prune.tree_test(new.tree,nestedclust_test,trunk_cluster)
+      new.tree            <- prune.tree_test(edgelist_full = new.tree
+                                             , nestedclust = nestedclust_test
+                                             , trunk_cluster = trunk_cluster)
       new.tree           <- new.tree[!duplicated(paste(new.tree[,1],new.tree[,2],sep=":")),,drop=FALSE]
       new.tree.graph     <- graph.data.frame(new.tree)
       plot(new.tree.graph,layout=layout.reingold.tilford(new.tree.graph, root=trunk_cluster) )
@@ -1056,7 +971,9 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
 
       new.tree           <- rbind(new.tree,nesting.to.keep)
       rownames(new.tree) <- 1:nrow(new.tree)
-      new.tree           <- prune.tree_test(new.tree,nestedclust_test,trunk_cluster)
+      new.tree           <- prune.tree_test(edgelist_full = new.tree
+                                            ,nestedclust = nestedclust_test
+                                            ,trunk_cluster = trunk_cluster)
       new.tree.graph     <- graph.data.frame(new.tree)
       plot(new.tree.graph,layout=layout.reingold.tilford(new.tree.graph, root=trunk_cluster) )
 
@@ -1146,7 +1063,9 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
 
             new.tree           <- rbind(new.tree,nesting.to.keep)
             rownames(new.tree) <- 1:nrow(new.tree)
-            new.tree           <- prune.tree_test(new.tree,nestedclust_test,trunk_cluster)
+            new.tree           <- prune.tree_test(edgelist_full = new.tree
+                                                  , nestedclust = nestedclust_test
+                                                  , trunk_cluster = trunk_cluster)
             new.tree           <- new.tree[!duplicated(paste(new.tree[,1],new.tree[,2],sep=":")),,drop=FALSE]
             new.tree.graph     <- graph.data.frame(new.tree)
 
@@ -1789,6 +1708,9 @@ get.direct.descendent <- function(cluster,edgeList)
   return(edgeList[edgeList[,1]==cluster,2])
 }
 
+
+#' Function to unfod tree
+#' @importFrom igraph "shortest.paths"
 unfold_tree <- function(edgelist, lower, trunk)
 {
   tree_levels <- check.levels.ccf(edgelist, lower, trunk)[[2]]
@@ -1864,9 +1786,15 @@ check.levels.ccf <- function(tree, lower, trunk)
   return(list(level_ccf, tlevels))
 }
 
-prune.cycle <- function(egdgelist,nestedclust,ccf_ci_lower,max_per_level,trunk_cluster)
+prune.cycle <- function(edgelist
+                        , nestedclust
+                        , ccf_ci_upper
+                        , ccf_ci_lower
+                        , max_per_level
+                        , trunk_cluster
+                        , force_trunk = TRUE)
 {
-  unfolded_tree             <- egdgelist
+  unfolded_tree             <- edgelist
   clusters_with_multi_input <- sort(unique(unfolded_tree[duplicated(unfolded_tree[,2]),2]),decreasing=FALSE)
   strictclust               <- update.nested.cluster(nestedclust,ccf_ci_lower = ccf_ci_lower,max_per_level = max_per_level,trunk_cluster)
   nestedclust_new           <- nestedclust
@@ -1951,7 +1879,9 @@ prune.cycle <- function(egdgelist,nestedclust,ccf_ci_lower,max_per_level,trunk_c
       directedGraph_input_full_test <- rbind(directedGraph_input_full_test, tmp)
     }
   }
-  directedGraph_input_pruned <- prune.tree_test(edgelist = directedGraph_input_full_test,nestedclust = nestedclust_test,trunk_cluster = trunk_cluster)#,nestedclust = nestedclust)
+  directedGraph_input_pruned <- prune.tree_test(edgelist_full = directedGraph_input_full_test
+                                                ,nestedclust = nestedclust_test
+                                                ,trunk_cluster = trunk_cluster)#,nestedclust = nestedclust)
 
   directedGraph_input_pruned_unfolded <- directedGraph_input_pruned
 
@@ -1994,7 +1924,9 @@ is.there.ccf.issue <- function(nestedclust
   new_lower                           <- ccf_ci_lower[rownames(ccf_ci_lower) %in% unique(c(directedGraph_input_revised)),, drop = F]
 
 
-  directedGraph_input_revised_pruned <- prune.tree_test(edgelist = directedGraph_input_revised,nestedclust = revised_nestedclust,trunk_cluster = trunk_cluster)#,nestedclust = nestedclust)
+  directedGraph_input_revised_pruned <- prune.tree_test(edgelist_full = directedGraph_input_revised
+                                                        ,nestedclust = revised_nestedclust
+                                                        ,trunk_cluster = trunk_cluster)#,nestedclust = nestedclust)
   directedGraph_input_revised_pruned_unfolded   <- directedGraph_input_revised_pruned
   plot(graph.data.frame(directedGraph_input_revised_pruned_unfolded),layout=layout.reingold.tilford(graph.data.frame(directedGraph_input_revised_pruned_unfolded), root=trunk_cluster) )
   newlevels                                     <- check.levels.ccf(directedGraph_input_revised_pruned_unfolded, new_lower, trunk_cluster)
@@ -2036,6 +1968,7 @@ is.there.ccf.issue <- function(nestedclust
 #' Function to test which clusters are best to remove from tree
 #' This function permutes through clusters and checks which are the best to remove
 #' from the tree - takes into account number of mutations
+#' @importFrom utils "combn"
 permute.clusters.to.remove <- function(test_out
                                        ,nestedclust
                                        ,max_per_level
@@ -2191,14 +2124,15 @@ permute.clusters.to.remove <- function(test_out
 }
 
 permute.clusters.to.add.back <- function(new_test_out
-                                         ,nestedclust
-                                         ,max_per_level
-                                         ,tlevels
-                                         ,trunk_cluster
-                                         ,cluster_qc
-                                         ,ccf_ci_lower
-                                         ,ccf_ci_upper
-                                         ,new_clusters_to_test
+                                         , nestedclust
+                                         , max_per_level
+                                         , tlevels
+                                         , trunk_cluster
+                                         , cluster_qc
+                                         , ccf_ci_lower
+                                         , ccf_ci_upper
+                                         , new_clusters_to_test
+                                         , force_trunk = TRUE
 )
 {
 
@@ -2242,7 +2176,9 @@ permute.clusters.to.add.back <- function(new_test_out
         directedGraph_input_full_test <- rbind(directedGraph_input_full_test, tmp)
       }
     }
-    directedGraph_input_pruned <- prune.tree_test(edgelist = directedGraph_input_full_test,nestedclust = nestedclust_test,trunk_cluster = trunk_cluster)
+    directedGraph_input_pruned <- prune.tree_test(edgelist_full = directedGraph_input_full_test
+                                                  ,nestedclust = nestedclust_test
+                                                  ,trunk_cluster = trunk_cluster)
 
     directedGraph_input_pruned_unfolded <-directedGraph_input_pruned
 
@@ -2256,7 +2192,12 @@ permute.clusters.to.add.back <- function(new_test_out
     }
     if(ccf.test$levelissue%in%TRUE|ccf.test$circle%in%TRUE)
     {
-      prune.out <- prune.cycle(egdgelist = directedGraph_input_pruned_unfolded,nestedclust = nestedclust_new,ccf_ci_lower = ccf_ci_lower,max_per_level = max_per_level,trunk_cluster = trunk_cluster)
+      prune.out <- prune.cycle(edgelist = directedGraph_input_pruned_unfolded
+                               , nestedclust = nestedclust_new
+                               , ccf_ci_upper = ccf_ci_upper
+                               , ccf_ci_lower = ccf_ci_lower
+                               , max_per_level = max_per_level
+                               , trunk_cluster = trunk_cluster)
       if(prune.out$levelissue%in%FALSE&prune.out$circle%in%FALSE&prune.out$consistencyissue%in%FALSE)
       {
         nestedclust_new <- prune.out$nestedcluster
@@ -2305,7 +2246,9 @@ permute.clusters.to.add.back <- function(new_test_out
       directedGraph_input_full_test <- rbind(directedGraph_input_full_test, tmp)
     }
   }
-  directedGraph_input_pruned <- prune.tree_test(edgelist = directedGraph_input_full_test,nestedclust = nestedclust_test,trunk_cluster = trunk_cluster)
+  directedGraph_input_pruned <- prune.tree_test(edgelist_full = directedGraph_input_full_test
+                                                ,nestedclust = nestedclust_test
+                                                ,trunk_cluster = trunk_cluster)
 
   directedGraph_input_pruned_unfolded <- directedGraph_input_pruned#test[[1]]
 
@@ -2355,38 +2298,6 @@ check.internally.consistent <- function(tree_small,tree_full,trunk)
   return(cluster_out)
 }
 
-prune.tree.old  <- function(edgelist)
-{
-  edgelist_new <- edgelist
-  rownames(edgelist_new) <- rownames(edgelist) <- 1:nrow(edgelist_new)
-  trunk_node <- unique(edgelist[, 1][!edgelist[, 1] %in% edgelist[, 2]])
-  receiving_nodes <- table(edgelist[, 2])
-  #Nodes with multiple inputs
-  receiving_nodes <- receiving_nodes[receiving_nodes > 1]
-  receiving_nodes <- receiving_nodes[order(as.numeric(names(receiving_nodes)), decreasing = T)]
-  remove_edges <- c()
-  if (length(receiving_nodes) > 0) {
-    for (i in 1:length(receiving_nodes)) {
-      test_nets <- edgelist_new[edgelist_new[, 2] %in% names(receiving_nodes)[i],, drop = F]
-      #This trick ensures that if two nodes are both single transmitters (causing a circle) it is not resolved here, as that would be corrected without testing if it is correct
-      tmp <- sort(table(edgelist_new[edgelist_new[, 2] %in% test_nets[, 1], 2]), decreasing = T)
-      transmitting_node <- names(tmp[tmp %in% tmp[1]])
-      probably_remove_edges <- c(remove_edges, rownames(test_nets)[!test_nets[, 1] %in% transmitting_node])
-      probably_edgelist_new <- edgelist_new[!rownames(edgelist_new) %in% probably_remove_edges,, drop = F]
-      #Test if all nodes are still descended from trunk, and trunk must still be present in the nodes
-      if (trunk_node %in% c(probably_edgelist_new)) {
-        directedGraph <- graph.data.frame(probably_edgelist_new)
-        if (all(shortest.paths(directedGraph, mode = 'in')[-1, trunk_node] != 'Inf')) {
-          remove_edges <- probably_remove_edges
-          edgelist_new <- probably_edgelist_new
-        }
-      }
-    }
-  }
-  edgelist <- edgelist[!rownames(edgelist) %in% remove_edges,, drop = F]
-  return(edgelist)
-}
-
 on.same.branch   <- function(cluster1,cluster2,tree.to.test,trunk_cluster)
 {
   ancestors         <- c()
@@ -2422,7 +2333,9 @@ check.nesting    <- function (tree.to.test,strict_nestedclust,trunk_cluster)
 
   tree.test        <- rbind(directedGraph_input_full,tree.to.test)
   full.tree        <- tree.test[!duplicated(paste(tree.test[,1],tree.test[,2],sep=":")),,drop=FALSE]
-  new.tree.out     <- prune.tree_test(full.tree,strict_nestedclust,trunk_cluster)
+  new.tree.out     <- prune.tree_test(edgelist_full = full.tree
+                                      , nestedclust = strict_nestedclust
+                                      , trunk_cluster = trunk_cluster)
   potential.issues <- new.tree.out[!paste(new.tree.out[,1],new.tree.out[,2],sep=":")%in%paste(tree.to.test[,1],tree.to.test[,2],sep=":"),,drop=FALSE]
 
   if(nrow(potential.issues)==0)
@@ -2460,10 +2373,12 @@ check.nesting    <- function (tree.to.test,strict_nestedclust,trunk_cluster)
 #' and mutation assignments to a cluster and computes bootstrapped
 #' confidence intervals.
 #' @param pyclone An R list object containing information about the PhyloCCF
-#' of each mutation in each tumour region.
+#' of each mutation in each tumour region
 #' @returns An R list containing elements: 'ccf_cluster_table', 'mean_phylo_ccf',
 #' 'median_pyclone_ccf', 'median_phylo_ccf', 'ccf_ci_upper', 'ccf_ci_lower',
 #' 'ccf_ci_boot_upper', 'ccf_ci_boot_lower'
+#' @importFrom stats "median" "qnorm" "sd"
+#' @importFrom boot "boot.ci"
 
 calc.pyclone.ci <- function(pyclone
                             , pyclust
@@ -2586,6 +2501,7 @@ calc.pyclone.ci <- function(pyclone
 #' @param nclusters Number of clusters
 #' @param pval_cutoff A p-value significance threshold for testing whether
 #' clusters can be nested. (i.e. a p-value < pval_cutoff is significant)
+#' @importFrom stats "wilcox.test"
 #' @returns This function returns list of nesting matrices. Each element of the
 #' list is a nesting matrix for one tumour region, that describes whether a
 #' cluster A (row) can be nested within a cluster B (column).
@@ -2945,6 +2861,7 @@ trx_rename.fn <- function(trxid, trialID = 'LTX')
 #' Plotting function to colour the nodes on the phylogenetic tree
 #'
 #' @param edgelength A named vector containing number of mutations of each cluster
+#' @importFrom RColorBrewer "brewer.pal"
 color.tree <- function(edgelength, opacity = 255)
 {
   suppressPackageStartupMessages(require(RColorBrewer))
@@ -3242,7 +3159,7 @@ compute_subclone_proportions <- function(tree_list
       # order the parent subclones by tree level
       parent_df <- data.frame(parent_node = parents_present)
       parent_df$level <- sapply(parent_df$parent_node, function(p) return(get_tree_level(as.matrix(tree), p)))
-      setorder(parent_df, level)
+      data.table::setorder(parent_df, level)
 
       # For each parent node in tree: compute the difference in CCF between parent node and sum of its children
       for (p in parent_df$parent_node){

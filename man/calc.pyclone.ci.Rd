@@ -8,7 +8,7 @@ calc.pyclone.ci(pyclone, pyclust, nclusters, prefix = "LTX", lower_min = 0)
 }
 \arguments{
 \item{pyclone}{An R list object containing information about the PhyloCCF
-of each mutation in each tumour region.}
+of each mutation in each tumour region}
 }
 \value{
 An R list containing elements: 'ccf_cluster_table', 'mean_phylo_ccf',

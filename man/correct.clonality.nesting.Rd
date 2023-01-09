@@ -8,7 +8,11 @@ correct.clonality.nesting(
   nestedlist,
   pyclone,
   clonality_table,
-  pval_cutoff = 0.01
+  pval_cutoff = 0.01,
+  min_cluster_size = 5,
+  use_boot = TRUE,
+  min_ccf = 0.05,
+  prefix = prefix
 )
 }
 \description{
