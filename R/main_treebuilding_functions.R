@@ -52,6 +52,20 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
     }
   }
 
+  # make sure all columns are the correct class
+  input_table$POS <- as.numeric(input_table$POS)
+  input_table$CCF_PHYLO <- as.numeric(input_table$CCF_PHYLO)
+  input_table$CCF_OBS <- as.numeric(input_table$CCF_OBS)
+  input_table$MUT_COPY <- as.numeric(input_table$MUT_COPY)
+  input_table$COPY_NUMBER_A <- as.numeric(input_table$COPY_NUMBER_A)
+  input_table$COPY_NUMBER_B <- as.numeric(input_table$COPY_NUMBER_B)
+  input_table$REF_COUNT <- as.numeric(input_table$REF_COUNT)
+  input_table$VAR_COUNT <- as.numeric(input_table$VAR_COUNT)
+  input_table$DEPTH <- as.numeric(input_table$DEPTH)
+  input_table$ACF <- as.numeric(input_table$ACF)
+  input_table$PLOIDY <- as.numeric(input_table$PLOIDY)
+
+
   # make sure all mutations have a cluster assigned
   tmp <- input_table[!is.na(input_table$CLUSTER),]
   removed_mutations <- c()
@@ -245,16 +259,16 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
 #' @export treebuilding_run
 
 treebuilding_run <- function(sample_input_list
-                                  , ccf_buffer =10
-                                  , pval_cutoff =0.01
-                                  , use_boot =TRUE
+                                  , ccf_buffer = 10
+                                  , pval_cutoff = 0.01
+                                  , use_boot = TRUE
                                   , merge_clusters = TRUE
-                                  , correct_cpn_clusters =TRUE
-                                  , adjust_noisy_clusters =FALSE
+                                  , correct_cpn_clusters = TRUE
+                                  , adjust_noisy_clusters = FALSE
                                   , adjust_noisy_clusters_prop = 0.05
                                   , min_ccf = 0.01
                                   , min_cluster_size = 5
-                                  , plotting =TRUE
+                                  , plotting = TRUE
                                   , run.multi.trees = TRUE
 )
 {
