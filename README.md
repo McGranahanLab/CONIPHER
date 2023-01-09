@@ -6,14 +6,17 @@
 This is the official github repository for the R package to perform tumour phylogenetic tree building using CONIPHER. For full details of the method, please refer to our manuscript and protocol XXX. For details on how to run mutation clustering and phylogenetic tree builing consecutively with one wrapper script, please refer to the github repository at https://github.com/FrancisCrickInstitute/TRACERx-clustering-treeBuilding. 
 
 
-Step 1. To install and be able to run CONIPHER, start R and install the 'CONIPHER' R package from this github with the following command:
+#### CONIPHER installation and run instructions
+Step 1. To install and be able to run CONIPHER tree building, start R and install the 'CONIPHER' R package from this github repository using the following command:
 
 ```
 library(devtools)
-devtools::install_github("McGranahanLab/CONIPHER", auth_token='YOUR_AUTH_TOKEN_HERE')
+devtools::install_github("McGranahanLab/CONIPHER")
 ```
+(NOTE: Currently github repo is private so use `devtools::install_github("McGranahanLab/CONIPHER", auth_token='YOUR_AUTH_TOKEN_HERE'))`)
 
-Step 2. Then to run tree building, start R and specify an input table .tsv file:
+
+Step 2. Specify your input data. To run CONIPHER treebuilding successfully, we require an input table, a sample and tumour case prefix and a desired output directory. For example:
 ```
 input_table <- read.delim2('path_to_your_input_table_here.tsv')
 prefix <- 'CRUK'
@@ -29,6 +32,8 @@ Step 4. Run the main tree building function:
 ```
 tree_output_list <- treebuilding_run(input_list)
 ```
+Full details of all input parameters in `treebuilding_run()` can be found in our protocol [here](https://www.example.com)
+
 
 Step 5. Plot tree output, if desired:
 ```
