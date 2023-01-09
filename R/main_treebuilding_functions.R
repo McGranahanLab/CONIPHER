@@ -493,12 +493,15 @@ treebuilding_run <- function(sample_input_list
   cat('\nTree identified\n')
 
   clonality_table <- clonality.function(pyclone = test_pyclone
-                                        ,trunk =graph_pyclone$trunk
+                                        ,trunk = graph_pyclone$trunk
                                         ,prefix = prefix
                                         , min_cluster_size = max(c(2, min_cluster_size))
                                         ,pval_cutoff = pval_cutoff
-                                        ,use_boot =use_boot )
-  clonality_out   <- correct.clonality.table(clonality_table = clonality_table,graph_pyclone = graph_pyclone,trunk_cluster = graph_pyclone$trunk) #TODO still may need correcting for one region cases #EC 20210509
+                                        ,use_boot = use_boot )
+  cat('\correcting clonality table\n')
+  clonality_out   <- correct.clonality.table(clonality_table = clonality_table
+                                             , graph_pyclone = graph_pyclone
+                                             , trunk_cluster = graph_pyclone$trunk) #TODO still may need correcting for one region cases #EC 20210509
 
   ### AH edit set CCF in ccf cluster table as well as upper and lower CIs to 0 if cluster is defined as absent
   for (region in colnames(clonality_table)) {

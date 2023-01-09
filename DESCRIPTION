@@ -21,7 +21,8 @@ Imports:
     grDevices,
     graphics,
     stats,
-    utils
+    utils,
+    plyr
 Suggests:
     devtools
 License: XXX

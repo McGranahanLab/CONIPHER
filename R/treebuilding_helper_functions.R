@@ -571,8 +571,10 @@ createAllPathsList <- function(tree.structure, trunk)
   return(all.paths)
 }
 
+#' @import plyr
 tree.structure.adjust.clonality <- function(tree.structure, trunk, clonality.called.cluster.region.df)
 {
+  suppressPackageStartupMessages(require(plyr))
   allpaths <- createAllPathsList(tree.structure, trunk)
   allpaths <- unlist(allpaths)
   allpaths <- strsplit(allpaths, split = ",")
@@ -3006,7 +3008,6 @@ compute_sum_condition_error <- function(tree_list
 #' @param trunk The name of the truncal cluster
 #' @returns sce_vec, A named vector of the sum condition error (SCE) for each
 #' tree structure in the input tree list
-#' @import data.table
 #' @importFrom data.table ":="
 compute_tree_edge_probability <- function(tree_list
                                           , edgelength
