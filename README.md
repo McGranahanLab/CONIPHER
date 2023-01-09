@@ -10,15 +10,15 @@ This is the official github repository for the R package to perform tumour phylo
 **Step 1.** To install and be able to run CONIPHER tree building, start R and install the 'CONIPHER' R package from this github repository using the following command:
 
 ```
-library(devtools)
 devtools::install_github("McGranahanLab/CONIPHER")
+library(CONIPHER)
 ```
 (NOTE: Currently github repo is private so use `devtools::install_github("McGranahanLab/CONIPHER", auth_token='YOUR_AUTH_TOKEN_HERE'))`)
 
 
 **Step 2.** Specify your input data. To run CONIPHER treebuilding successfully, we require an input table, a sample and tumour case prefix and a desired output directory. For example:
 ```
-input_table <- read.delim2('path_to_your_input_table_here.tsv')
+input_table <- read.delim2('toy_tsv.tsv', stringsAsFactors = FALSE)
 prefix <- 'CRUK'
 out_dir <- 'path_to_your_output_dir_here'
 ```
