@@ -27,7 +27,7 @@ library(CONIPHER)
 ```
 data(input_table)
 prefix <- 'CRUK'
-out_dir <- 'path_to_your_output_dir_here'
+out_dir <- 'data/results'
 ```
 
 **Step 3.** Run data preprocessing:
