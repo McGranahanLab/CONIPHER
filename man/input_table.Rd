@@ -3,7 +3,7 @@
 \docType{data}
 \name{input_table}
 \alias{input_table}
-\title{Toy input tsv file}
+\title{Example input table}
 \format{
 An object of class \code{"data.frame"}
 }
