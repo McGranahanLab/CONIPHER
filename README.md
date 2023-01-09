@@ -7,7 +7,7 @@ This is the official github repository for the R package to perform tumour phylo
 
 ---
 #### CONIPHER installation and run instructions
-Step 1. To install and be able to run CONIPHER tree building, start R and install the 'CONIPHER' R package from this github repository using the following command:
+**Step 1.** To install and be able to run CONIPHER tree building, start R and install the 'CONIPHER' R package from this github repository using the following command:
 
 ```
 library(devtools)
@@ -16,26 +16,26 @@ devtools::install_github("McGranahanLab/CONIPHER")
 (NOTE: Currently github repo is private so use `devtools::install_github("McGranahanLab/CONIPHER", auth_token='YOUR_AUTH_TOKEN_HERE'))`)
 
 
-Step 2. Specify your input data. To run CONIPHER treebuilding successfully, we require an input table, a sample and tumour case prefix and a desired output directory. For example:
+**Step 2.** Specify your input data. To run CONIPHER treebuilding successfully, we require an input table, a sample and tumour case prefix and a desired output directory. For example:
 ```
 input_table <- read.delim2('path_to_your_input_table_here.tsv')
 prefix <- 'CRUK'
 out_dir <- 'path_to_your_output_dir_here'
 ```
 
-Step 3. Run data preprocessing:
+**Step 3.** Run data preprocessing:
 ```
 input_list <- treebuilding_preprocess(input_table, prefix, out_dir)
 ```
 
-Step 4. Run the main tree building function:
+**Step 4.** Run the main tree building function:
 ```
 tree_output_list <- treebuilding_run(input_list)
 ```
 Full details of all input parameters in `treebuilding_run()` can be found in our protocol [here](https://www.example.com)
 
 
-Step 5. Plot tree output, if desired:
+**Step 5.** Plot tree output, if desired:
 ```
 treebuilding_plot(tree_output_list)
 ```
