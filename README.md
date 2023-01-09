@@ -10,8 +10,8 @@ This is the official github repository for the R package to perform tumour phylo
 **Step 1.** To install and be able to run CONIPHER tree building, start R and install the 'CONIPHER' R package from this github repository using the following command:
 
 ```
-library(devtools)
 devtools::install_github("McGranahanLab/CONIPHER")
+library(CONIPHER)
 ```
 (NOTE: Currently github repo is private so use `devtools::install_github("McGranahanLab/CONIPHER", auth_token='YOUR_AUTH_TOKEN_HERE'))`)
 
