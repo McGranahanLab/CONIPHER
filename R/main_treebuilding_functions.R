@@ -45,14 +45,6 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
     stop("Incorrect prefix specified. Please input the correct prefix for the current tumour case.")
   }
 
-  if(!'CLUSTER'%in%colnames(input_table$CASE_ID[1]))
-  {
-    if('originalCLUSTER'%in%colnames(input_table))
-    {
-      colnames(input_table) <- gsub("originalCLUSTER","CLUSTER",colnames(input_table))
-    }
-  }
-
   # make sure all columns are the correct class
   input_table$POS <- as.numeric(input_table$POS)
   input_table$CCF_PHYLO <- as.numeric(input_table$CCF_PHYLO)
@@ -257,7 +249,7 @@ treebuilding_run <- function(sample_input_list
                                   , adjust_noisy_clusters_prop = 0.05
                                   , min_ccf = 0.01
                                   , min_cluster_size = 5
-                                  , plotting = TRUE
+                                  # , plotting = TRUE
                                   , run.multi.trees = TRUE
 )
 {
@@ -659,12 +651,12 @@ treebuilding_plot <- function(sample_pyclone_tree)
 
   merged_clusters <- sample_pyclone_tree$merged_clusters
 
-  setwd(generalSave)
+  # setwd(generalSave)
 
   ### Plot trees -- AUTOMATIC
   date <- gsub('-', '', substr(Sys.time(), 1, 10))
 
-  pdfname <- 'pytree_and_bar.pdf'
+  pdfname <- file.path(generalSave, 'pytree_and_bar.pdf')
 
   height.mult.factor <- ceiling(nrow(nested_pyclone$ccf_cluster_table)/25)
   width.mult.factor  <- ceiling(nrow(nested_pyclone$ccf_cluster_table)/25)
@@ -853,7 +845,7 @@ treebuilding_plot <- function(sample_pyclone_tree)
 
     date <- gsub('-', '', substr(Sys.time(), 1, 10))
 
-    pdfname <- 'pytree_multipletrees.pdf'
+    pdfname <- file.path(generalSave, 'pytree_multipletrees.pdf')
 
     mult.factor <- ceiling(length(trees.to.plot)/50)
 
