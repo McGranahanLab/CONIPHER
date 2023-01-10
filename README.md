@@ -6,7 +6,7 @@
 This is the official github repository for the R package to perform tumour phylogenetic tree building using CONIPHER. For full details of the method, please refer to our manuscript and protocol XXX. For details on how to run mutation clustering and phylogenetic tree builing consecutively with one wrapper script, please refer to the github repository  [CONIPHER-wrapper](https://github.com/McGranahanLab/CONIPHER-wrapper). 
 
 #### Software
-The current implementation of CONIPHER tree building is written in `r=3.6.1` and is distributed as an R package.
+The current implementation of CONIPHER tree building is written in `R=3.6.1` and is distributed as an R package.
 
 ---
 ### Quick start
@@ -14,7 +14,7 @@ The current implementation of CONIPHER tree building is written in `r=3.6.1` and
 To get start quickly, you can install CONIPHER tree building and perform phylogenetic tree reconstruction on the example data provided using the following instructions.
 
 #### CONIPHER installation and run instructions
-To install and be able to run CONIPHER tree building, you must have R package `devtools` installed. 
+To install and be able to run CONIPHER tree building, you must have R package `devtools >= 2.4.1` installed. 
 
 **Step 1.** Start R and install the 'CONIPHER' R package from this github repository using the following command:
 ```
