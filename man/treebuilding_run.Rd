@@ -15,7 +15,6 @@ treebuilding_run(
   adjust_noisy_clusters_prop = 0.05,
   min_ccf = 0.01,
   min_cluster_size = 5,
-  plotting = TRUE,
   run.multi.trees = TRUE
 )
 }
@@ -49,8 +48,6 @@ present? (default=0.01)}
 
 \item{min_cluster_size}{What is the minimum number of mutations required in a
 cluster to be included in analysis? (default=5)}
-
-\item{plotting}{Should inferred phylogenetic trees be plotted? (default=TRUE)}
 
 \item{run.multi.trees}{Should alternative tumour phylogenies be explored?
 (default=TRUE)}
