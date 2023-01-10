@@ -52,9 +52,9 @@ treebuilding_plot(tree_output_list)
 The tree building will return 3 output files:
 - <CASE_ID>.tree.RDS: an R list object containing tree building output information
 - pytree_and_bar.pdf: a plot of the default reconstructed tree and barplot
-![pytree_and_bar.pdf](https://github.com/McGranahanLab/CONIPHER/files/10381097/pytree_and_bar.pdf)
+![Pytree and bar](https://github.com/McGranahanLab/CONIPHER/files/10381097/pytree_and_bar.pdf)
 - pytree_multipletrees.pdf: a plot showing all possible alternative phylogenetic trees found by CONIPHER
-[pytree_multipletrees.pdf](https://github.com/McGranahanLab/CONIPHER/files/10381106/pytree_multipletrees.pdf)
+![Multiple trees](https://github.com/McGranahanLab/CONIPHER/files/10381106/pytree_multipletrees.pdf)
 
 
 
