@@ -66,7 +66,7 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
   {
     if(length(unique(tmp[tmp$mutation_id%in%mutation_id,]$CLUSTER))==0)
     {
-      # warning
+      # add warning
       removed_mutations <- c(removed_mutations,mutation_id)
       cat('\nwarning:')
       cat('', paste(mutation_id),'does not have a CLUSTER assigned, will remove')
@@ -270,7 +270,6 @@ treebuilding_run <- function(sample_input_list
   input_parameter_list$min_ccf                       <- min_ccf
   input_parameter_list$min_cluster_size              <- min_cluster_size
 
-  #
   cat('\nFollowing parameters used for tree building:\n')
   print(do.call(rbind,input_parameter_list))
 
@@ -290,9 +289,6 @@ treebuilding_run <- function(sample_input_list
   test_pyclone          <- sample_input_list$pyclone
   test_pyclone_absolute <- sample_input_list$pyclone_absolute
 
-  #check how many regions you have...
-
-  #state parameters for use below.
   if(adjust_noisy_clusters)
   {
     cat('\nAdjusting noisy clusters\n')
@@ -488,9 +484,6 @@ treebuilding_run <- function(sample_input_list
   }
   ### AH edit done
 
-  # EC 20210509 check why printing NULL here
-  # clonality_list[[i]] <- clonality_out #removed for one region cases
-
   if (run.multi.trees) {
     cat('\nExploring presence of multiple alternate trees')
     multi.trees     <- grow.multi.trees(nestedlist = nested_pyclone
@@ -503,7 +496,6 @@ treebuilding_run <- function(sample_input_list
     multi.trees <- NULL
   }
 
-  # pyclone_tree   <- prep_pyclone_tree.fn(graph_pyclone,nested_pyclone)
   graph_pyclone$alt_trees          <- multi.trees$good.trees
 
 
@@ -649,8 +641,6 @@ treebuilding_plot <- function(sample_pyclone_tree)
 
   merged_clusters <- sample_pyclone_tree$merged_clusters
 
-  # setwd(generalSave)
-
   ### Plot trees -- AUTOMATIC
   date <- gsub('-', '', substr(Sys.time(), 1, 10))
 
@@ -662,8 +652,6 @@ treebuilding_plot <- function(sample_pyclone_tree)
 
   pdf(pdfname, width=22*width.mult.factor, height=12*height.mult.factor)
   {
-
-    #par(mar=c(0.1,5,0.1,2),lend=1)
     par(mar=c(0,0,0,0))
     layout(cbind(1:(nrow(nested_pyclone$ccf_cluster_table)+2),rep(nrow(nested_pyclone$ccf_cluster_table)+3,nrow(nested_pyclone$ccf_cluster_table)+2),rep(nrow(nested_pyclone$ccf_cluster_table)+3,nrow(nested_pyclone$ccf_cluster_table)+2)))
     require(beeswarm)
@@ -672,13 +660,10 @@ treebuilding_plot <- function(sample_pyclone_tree)
     main <- paste(substr(colnames(tmp)[1], 1, 8), '\ Phylo CCF values', sep = '')
     colnames(tmp) <- gsub(paste0(substr(colnames(tmp)[1], 1, 8), "_"), "", colnames(tmp))
     suppressPackageStartupMessages(require(gplots))
-    #textplot(tmp)
     plot.new()
     par(mar=c(2,2,2,2))
     title(main, cex = 2)
 
-
-    #lend(1)
     colours.to.use <- color.tree(1:nrow(nested_pyclone$ccf_cluster_table))
 
     par(mar=c(0.1,5,0.1,2),lend=1)
@@ -695,7 +680,6 @@ treebuilding_plot <- function(sample_pyclone_tree)
       if(j!=1)
       {
         border.col <- ifelse(clonality_table[j,]=='clonal','black','grey')
-        #border.col <- ifelse(nested_pyclone$ccf_ci_upper[j,]>=nested_pyclone$ccf_ci_lower[trunk_cluster,]-ccf_buffer,'black','grey')
         bp <- barplot(nested_pyclone$ccf_cluster_table[j,],las=1,col=colours.to.use[j],border=border.col,names="",ylab=paste("Cl",rownames(nested_pyclone$ccf_cluster_table)[j],sep=" "),ylim=c(0,115),yaxt='n',cex.axis=1.25)
 
       }
@@ -704,10 +688,7 @@ treebuilding_plot <- function(sample_pyclone_tree)
       {
         axis(side=1,at=bp,labels=gsub(paste0(substr(colnames(nested_pyclone$ccf_cluster_table)[1], 1, 8), "_"), "",colnames(nested_pyclone$ccf_cluster_table))
              ,tick=FALSE
-             #,size=2
              ,cex.axis=1.25)
-
-
 
       }
       abline(h=0)
@@ -727,14 +708,7 @@ treebuilding_plot <- function(sample_pyclone_tree)
                  ,bg='grey')
         segments(x0 = bp[bar],x1 = bp[bar],y0 = nested_pyclone$ccf_ci_lower[j,bar],y1 = nested_pyclone$ccf_ci_upper[j,bar],lwd=5)
         text(x=bp[bar],y=25,labels=nested_pyclone$ccf_cluster_table[j,bar],cex =1.5)
-
-
-
       }
-
-
-
-
     }
 
     plot.new()
@@ -798,7 +772,7 @@ treebuilding_plot <- function(sample_pyclone_tree)
          , vertex.label.dist=0
          , vertex.label.family='Helvetica'
          , vertex.label.font=2
-         , vertex.label.color = 'black')#vcol[indx])
+         , vertex.label.color = 'black')
 
 
     legend.pie(1,1,labels=gsub(paste0(substr(colnames(tmp)[1], 1, 8), "_"), "", colnames(tmp)), radius=0.2, bty="n", col='#bdbdbd',
@@ -809,7 +783,6 @@ treebuilding_plot <- function(sample_pyclone_tree)
 
     snv_clusters_removed <- pyclone_tree$edgelength
     snv_clusters_removed <- sort(snv_clusters_removed[!names(snv_clusters_removed) %in% indx], decreasing = T)
-    # snv_clusters_removed_cpn <- cpn_removed_clusters
     if(!is.na(cpn_removed_clusters[1]))
     {
       snv_clusters_removed <- c(snv_clusters_removed,table(sample_pyclone_tree$ccf_table_pyclone[,'PycloneCluster'])[cpn_removed_clusters])
@@ -882,20 +855,17 @@ treebuilding_plot <- function(sample_pyclone_tree)
       par(mfrow=c(rownum,columnnum),xpd=TRUE,mar=c(1, 1,1, 1))
       for (i in 1:nr.trees)
       {
-        # pyclone_tree <- all_pyclone_trees[[1]]
         auto_tree    <- trees.to.plot[[i]]
         g <- graph.data.frame(auto_tree,directed = FALSE)
         indx <- V(g)$name
         vcol <- setNames(color.tree(pyclone_tree$edgelength), names(pyclone_tree$edgelength))[indx]
 
         l <- layout_as_tree(g, root = pyclone_tree$trunk)
-        #get.edgelist(g)
-
 
         pie.size <- ncol(nested_pyclone$ccf_cluster_table)
         node.shape <- setNames(rep('pie', length(vcol)), names(vcol))
         pie.slices <- lapply(1:length(vcol), function(x) rep(1, pie.size))
-        empty.col = 'gray85'#'white'
+        empty.col = 'gray85'
 
         node_size_factor <- log2(max(pyclone_tree$edgelength)) / 30
         node.size <- log2(pyclone_tree$edgelength) / node_size_factor
@@ -920,7 +890,6 @@ treebuilding_plot <- function(sample_pyclone_tree)
         ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- '#000000'
         ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- 2
 
-
         plot(g, main = sampleID
              , layout = l
              , vertex.color = vcol[indx]
@@ -937,9 +906,6 @@ treebuilding_plot <- function(sample_pyclone_tree)
         )
 
       }
-
-
-
 
     }
     dev.off()
