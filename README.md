@@ -38,14 +38,23 @@ input_list <- treebuilding_preprocess(input_table, prefix, out_dir)
 ```
 tree_output_list <- treebuilding_run(input_list)
 ```
-Full details of all input parameters in `treebuilding_run()` can be found in our protocol [here](https://www.example.com)
+Full details of all input parameters in `treebuilding_run()` can be found in our protocol [here](CONIPHER_arxiv)
 
 
 **Step 5.** Plot tree output, if desired:
 ```
 treebuilding_plot(tree_output_list)
 ```
+--- 
+
+### Anticipated results
+
+The tree building will return 3 output files:
+- <CASE_ID>.tree.RDS: an R list object containing tree building output information
+- pytree_and_bar.pdf: a plot of the default reconstructed tree and barplot
+![pytree_and_bar.pdf](https://github.com/McGranahanLab/CONIPHER/files/10381097/pytree_and_bar.pdf)
+- pytree_multipletrees.pdf: a plot showing all possible alternative phylogenetic trees found by CONIPHER
+[pytree_multipletrees.pdf](https://github.com/McGranahanLab/CONIPHER/files/10381106/pytree_multipletrees.pdf)
 
 
----
 
