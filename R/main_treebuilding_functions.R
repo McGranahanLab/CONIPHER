@@ -232,7 +232,6 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
 #' present? (default=0.01)
 #' @param min_cluster_size What is the minimum number of mutations required in a
 #' cluster to be included in analysis? (default=5)
-#' @param plotting Should inferred phylogenetic trees be plotted? (default=TRUE)
 #' @param run.multi.trees Should alternative tumour phylogenies be explored?
 #' (default=TRUE)
 #' @returns sample_pyclone_tree, an R list object containing output information
@@ -249,7 +248,6 @@ treebuilding_run <- function(sample_input_list
                                   , adjust_noisy_clusters_prop = 0.05
                                   , min_ccf = 0.01
                                   , min_cluster_size = 5
-                                  # , plotting = TRUE
                                   , run.multi.trees = TRUE
 )
 {
