@@ -38,7 +38,6 @@ input_list <- treebuilding_preprocess(input_table, prefix, out_dir)
 ```
 tree_output_list <- treebuilding_run(input_list)
 ```
-Full details of all input parameters in `treebuilding_run()` can be found in our protocol [here](CONIPHER_arxiv)
 
 
 **Step 5.** Plot tree output, if desired:
