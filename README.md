@@ -3,7 +3,7 @@
 ## CONIPHER phylogenetic tree building 
 ### R package
 
-This is the official github repository for the R package to perform tumour phylogenetic tree building using CONIPHER. For full details of the method, please refer to our manuscript and protocol XXX. For details on how to run mutation clustering and phylogenetic tree builing consecutively with one wrapper script, please refer to the github repository  [CONIPHER-wrapper](https://github.com/McGranahanLab/CONIPHER-wrapper). 
+This is the official github repository for the R package to perform tumour phylogenetic tree building using CONIPHER. For details on how to run mutation clustering and phylogenetic tree builing consecutively with one wrapper script, please refer to the github repository [CONIPHER-wrapper](https://github.com/McGranahanLab/CONIPHER-wrapper). 
 
 #### Software
 The current implementation of CONIPHER tree building is written in `R=3.6.1` and is distributed as an R package.
@@ -38,7 +38,6 @@ input_list <- treebuilding_preprocess(input_table, prefix, out_dir)
 ```
 tree_output_list <- treebuilding_run(input_list)
 ```
-Full details of all input parameters in `treebuilding_run()` can be found in our protocol [here](CONIPHER_arxiv)
 
 
 **Step 5.** Plot tree output, if desired:
