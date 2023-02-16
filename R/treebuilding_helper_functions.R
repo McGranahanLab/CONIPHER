@@ -3116,7 +3116,7 @@ compute_subclone_proportions <- function(tree_list
 
   # if tree is just clonal cluster
   if (length(clusters_in_tree) == 1){
-    clone_proportion_table <- (ccf_cluster_table > 0)
+    clone_proportion_table <- (ccf_cluster_table > 0) * 100
   } else {
 
     colnames(tree) <- c('Parent', 'Child')
@@ -3193,7 +3193,7 @@ compute_subclone_proportions <- function(tree_list
 
     # fix final output matrix
     rownames(proportions_df) <- proportions_df$cluster
-    clone_proportion_table <- as.matrix(proportions_df[, region_IDs])
+    clone_proportion_table <- as.matrix(proportions_df[, region_IDs, drop = F])
   }
   return(clone_proportion_table)
 }
