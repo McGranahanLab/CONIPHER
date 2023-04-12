@@ -6,7 +6,8 @@ Author: Nicholas McGranahan
 Maintainer: Kristiana Grigoriadis <kristiana.grigoriadis.19@ucl.ac.uk>
 Description: CONIPHER is an R package for reconstruction of tumour phylogenetic 
     trees from DNA sequencing mutation data. 
-    A full description of CONIPHER can be found in our pre-print XXX.
+    A full description of CONIPHER can be found in our pre-print at:
+    doi.org/10.21203/rs.3.pex-2158/v1.
 Depends:
     R (>= 3.6.1)
 Imports:
