@@ -3059,6 +3059,7 @@ compute_tree_edge_probability <- function(tree_list
 #' Function to compute the tree level of a cluster
 #' @param tree_graph A matrix of a tree structure
 #' @param cluster Name of a cluster for which you want to get the tree level
+#' @export get_tree_level
 get_tree_level <- function(tree_graph
                            , cluster)
 {
@@ -3101,6 +3102,7 @@ get_tree_level <- function(tree_graph
 #' 'clonal' in a region to have CCF==100
 #' @param tree_id The tree index of the selected alternative tree for which you
 #' want to compute the clone proportions
+#' @export compute_subclone_proportions
 compute_subclone_proportions <- function(tree_list
                                          , ccf_cluster_table
                                          , clonality_table
