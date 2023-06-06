@@ -15,7 +15,8 @@ treebuilding_run(
   adjust_noisy_clusters_prop = 0.05,
   min_ccf = 0.01,
   min_cluster_size = 5,
-  run.multi.trees = TRUE
+  run.multi.trees = TRUE,
+  n_clusters_to_move = 5
 )
 }
 \arguments{
@@ -51,6 +52,9 @@ cluster to be included in analysis? (default=5)}
 
 \item{run.multi.trees}{Should alternative tumour phylogenies be explored?
 (default=TRUE)}
+
+\item{n_clusters_to_move}{When running multiple trees specify the maximum 
+number of clusters to attempt moving. (default=5)}
 }
 \value{
 sample_pyclone_tree, an R list object containing output information

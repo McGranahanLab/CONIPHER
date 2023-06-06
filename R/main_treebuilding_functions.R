@@ -234,6 +234,8 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir)
 #' cluster to be included in analysis? (default=5)
 #' @param run.multi.trees Should alternative tumour phylogenies be explored?
 #' (default=TRUE)
+#' @param n_clusters_to_move When running multiple trees specify the maximum 
+#' number of clusters to attempt moving. (default=5)
 #' @returns sample_pyclone_tree, an R list object containing output information
 #' from CONIPHER tree building
 #' @export treebuilding_run
@@ -249,6 +251,7 @@ treebuilding_run <- function(sample_input_list
                                   , min_ccf = 0.01
                                   , min_cluster_size = 5
                                   , run.multi.trees = TRUE
+                                  , n_clusters_to_move = 5
 )
 {
   suppressPackageStartupMessages(require(igraph))
@@ -490,6 +493,7 @@ treebuilding_run <- function(sample_input_list
                                         ,pyclone = test_pyclone
                                         ,graph_pyclone = graph_pyclone
                                         ,ccf_buffer = ccf_buffer
+                                        ,n_clusters_to_move = n_clusters_to_move
     )
 
   } else {

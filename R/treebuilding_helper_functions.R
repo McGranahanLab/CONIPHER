@@ -816,9 +816,10 @@ correct.clonality.table <- function(clonality_table,graph_pyclone,trunk_cluster)
 #' @param graph_pyclone An R list containing information about the tree structure
 #' @param pyclone An R list containing information about mutation PhyloCCF
 #' @param ccf_buffer PhyloCCF buffer permitted when checking tree level issue
+#' @param n_clusters_to_move Maximum number of clusters to move simultaneously
 #' @returns An R list containing all possible alternative tree structures and
 #' information about which branches are consensus across multiple trees
-grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
+grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_clusters_to_move=5)
 {
   suppressWarnings(require(gtools))
   suppressWarnings(require(igraph))
@@ -863,12 +864,12 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10)
   potential.trees <- list()
   k <- 1
   cat('\nCalculating combinations of clusters to remove\n')
-  # let's limit to 6 possible combinations of clusters being moved (otherwise we get a segfault)
-  if(length(clusters_with_potential_to_move)>6)
+  # let's limit to 5 possible combinations of clusters being moved (otherwise we get a segfault)
+  if(length(clusters_with_potential_to_move)>n_clusters_to_move)
   {
-    warning('Restricting number of clusters to simultaneously move to 6')
+    warning(paste0('Restricting number of clusters to simultaneously move to ', n_clusters_to_move))
   }
-  max_clusters_to_move <- min(length(clusters_with_potential_to_move),6)
+  max_clusters_to_move <- min(length(clusters_with_potential_to_move),n_clusters_to_move)
   for (r in 1:max_clusters_to_move)
   {
     cat('\n%complete:',round(((r-1)/max_clusters_to_move)*100),'')

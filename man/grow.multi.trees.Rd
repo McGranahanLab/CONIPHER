@@ -4,7 +4,13 @@
 \alias{grow.multi.trees}
 \title{Function to determine all possible alternative phylogenies}
 \usage{
-grow.multi.trees(nestedlist, graph_pyclone, pyclone, ccf_buffer = 10)
+grow.multi.trees(
+  nestedlist,
+  graph_pyclone,
+  pyclone,
+  ccf_buffer = 10,
+  n_clusters_to_move = 5
+)
 }
 \arguments{
 \item{nestedlist}{An R list containing information about the nesting
@@ -15,6 +21,8 @@ structure of mutation clusters in each region.}
 \item{pyclone}{An R list containing information about mutation PhyloCCF}
 
 \item{ccf_buffer}{PhyloCCF buffer permitted when checking tree level issue}
+
+\item{n_clusters_to_move}{Maximum number of clusters to move simultaneously}
 }
 \value{
 An R list containing all possible alternative tree structures and
