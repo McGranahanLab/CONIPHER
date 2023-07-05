@@ -1,0 +1,39 @@
+num_iters: 10000
+
+base_measure_params:
+  alpha: 1
+  beta: 1
+
+concentration:
+  value: 1.0
+  
+  prior:
+    shape: 1.0
+    rate: 0.001
+
+density: pyclone_beta_binomial
+
+beta_binomial_precision_params:
+  value: 1000
+
+  prior:
+    shape: 1.0
+    rate: 0.0001
+
+  proposal:
+    precision: 0.01
+
+working_dir: working.directory.location
+
+trace_dir: trace
+
+samples:
+  TCGA.barcode:
+    mutations_file: mutations.yaml
+
+    tumour_content:
+      value: 1.0
+
+    error_rate: 0.001
+
+

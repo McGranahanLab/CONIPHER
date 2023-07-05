@@ -2,6 +2,162 @@
 ##################               MAIN FUNCTIONS               ##################
 ################################################################################
 
+#' Full tree building run function
+#'
+#' This function takes all the input options and runs the three main steps:
+#' preprocess, tree building run and postprocess
+#' @param opt a list of options
+#' @returns NULL
+#' @export conipher_treebuilding
+
+conipher_treebuilding <- function(input_tsv_loc,
+                                  out_dir,
+                                  prefix,
+                                  ccf_buffer = 10,
+                                  pval_cutoff = 0.01,
+                                  use_boot = TRUE,
+                                  merge_clusters = TRUE,
+                                  correct_cpn_clusters = TRUE,
+                                  adjust_noisy_clusters = FALSE,
+                                  adjust_noisy_clusters_prop = 0.05,
+                                  min_ccf = 0.01,
+                                  min_cluster_size = 5,
+                                  multi_trees = TRUE,
+                                  ...) {
+    out_dir         <- paste0(out_dir, "/Trees/")
+
+    # cat("\nCONIPHER tree building analysis of the following tumour case:\n")
+    # print(patient)
+    # cat("\n")
+
+    if (!file.exists(out_dir)) {
+        if (!dir.create(out_dir, recursive = TRUE)) {
+            stop("Unable to create root directory.\n")
+        }
+    }
+
+    if(!file.exists(input_tsv_loc)) {
+        stop("Unable to find input_tsv.\n")
+    }
+    input_tsv     <- read.delim(input_tsv_loc, sep = "\t", stringsAsFactors = FALSE, header = TRUE, fill = TRUE, quote = "")
+    if (nrow(input_tsv) == 0) {
+        stop('No mutations passed filtering, stopping PyClone phylo clustering')
+    }
+    #### =========== PREOCESS INPUT DATA ========= ####
+
+    # preprocess input data into correct form for tree building
+    input_list <- treebuilding_preprocess(input_tsv, prefix, out_dir)
+
+    #### =========== RUN TREE BUILDING ========= ####
+
+    # run main CONIPHER tree building function
+    sample_pyclone_tree <-      treebuilding_run(sample_input_list = input_list
+                                                      , ccf_buffer = ccf_buffer
+                                                      , pval_cutoff = pval_cutoff
+                                                      , use_boot = use_boot
+                                                      , merge_clusters = merge_clusters
+                                                      , correct_cpn_clusters = correct_cpn_clusters
+                                                      , adjust_noisy_clusters = adjust_noisy_clusters
+                                                      , adjust_noisy_clusters_prop = adjust_noisy_clusters_prop
+                                                      , min_ccf = min_ccf
+                                                      , min_cluster_size = min_cluster_size
+                                                      , run.multi.trees = multi_trees
+    )
+
+    #### =========== SAVE OUTPUT ========= ####
+
+    # Save all tree building output
+    if(!is.na(sample_pyclone_tree$graph_pyclone[1]))
+      cat('\nSaving all treebuilding output\n')
+    {
+      ### Plotting tree
+      treebuilding_plot(sample_pyclone_tree)
+
+      ### Creating human readable format
+      ### writing all trees
+      treeFile <- paste0(sample_pyclone_tree$parameters$generalSave, "allTrees.txt")
+      if ("alt_trees" %in% names(sample_pyclone_tree$graph_pyclone)) {
+        write.table(paste0("### ", length(sample_pyclone_tree$graph_pyclone$alt_trees), " trees"), file = treeFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+        tmp <- sapply(seq(1, length(sample_pyclone_tree$graph_pyclone$alt_trees)), function(x) {
+            write.table(paste0("# tree ", x), file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")  
+            write.table(sample_pyclone_tree$graph_pyclone$alt_trees[[x]], file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+        })
+      } else {
+        write.table(paste0("### ", 1, " trees"), file = treeFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+        write.table(paste0("# tree ", 1), file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")  
+        write.table(sample_pyclone_tree$graph_pyclone$Corrected_tree, file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+      }
+
+      ### writing consensus branches
+      consensusBranchesFile <- paste0(sample_pyclone_tree$parameters$generalSave, "consensusBranches.txt")
+      write.table(Reduce(rbind, strsplit(sample_pyclone_tree$graph_pyclone$consensus_branches, split = ":")), file = consensusBranchesFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+
+      ### writing consensus relationships
+      consensusRelationshipsFile <- paste0(sample_pyclone_tree$parameters$generalSave, "consensusRelationships.txt")
+      write.table(Reduce(rbind, strsplit(sample_pyclone_tree$graph_pyclone$consensus_relationships, split = ":")), file = consensusRelationshipsFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+      
+      ### writing cluster information
+      clusterInfoFile <- paste0(sample_pyclone_tree$parameters$generalSave, "clusterInfo.txt")
+
+      clusterInfoDF <- data.frame(clusterID = names(sample_pyclone_tree$graph_pyclone$edgelength), stringsAsFactors = FALSE)
+      clusterInfoDF$truncal <- ifelse(clusterInfoDF$clusterID %in% sample_pyclone_tree$graph_pyclone$trunk, TRUE, FALSE)
+      clusterInfoDF$treeClust <- ifelse(clusterInfoDF$clusterID %in% unique(c(sample_pyclone_tree$graph_pyclone$Corrected_tree)), TRUE, FALSE)
+      clusterInfoDF$cpnRemClust <- ifelse(clusterInfoDF$clusterID %in% sample_pyclone_tree$cpn_removed_clusters, TRUE, FALSE)
+      clusterInfoDF$nMuts <- as.numeric(sample_pyclone_tree$graph_pyclone$edgelength)
+
+      clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$nested_pyclone$ccf_cluster_table, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "meanCCF"), by = c("clusterID"))
+      clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$nested_pyclone$ccf_ci_lower, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "CCF_CI_low"), by = c("clusterID", "Region"))
+      clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$nested_pyclone$ccf_ci_upper, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "CCF_CI_high"), by = c("clusterID", "Region"))
+      clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$clonality_out$clonality_table_corrected, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "clonality"), by = c("clusterID", "Region"))
+      clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$clone_proportion_out$clone_proportion_table, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "clone_proportions_default"), by = c("clusterID", "Region"))
+      
+      clusterInfoDF <- clusterInfoDF %>% dplyr::rename(SAMPLE = Region)
+      write.table(clusterInfoDF, file = clusterInfoFile, row.names = FALSE, quote = FALSE, sep = "\t")
+
+      ### writing clone proportion information
+      cloneproportionInfoFile <- paste0(sample_pyclone_tree$parameters$generalSave, "cloneProportionsMinErrorTrees.txt")
+
+      cp_min_sce_trees <- sample_pyclone_tree$clone_proportion_out$clone_proportions_min_sce_trees
+      cloneproportionInfoList <- lapply(seq(cp_min_sce_trees), function(i){
+        tree_id <- names(cp_min_sce_trees)[i]
+        cp_table <- data.frame(cp_min_sce_trees[[i]], stringsAsFactors = FALSE)
+        cp_table$clusterID <- rownames(cp_table)
+        cp_table$treeID <- tree_id
+        return(cp_table)
+      })
+      cloneproportionInfoDF <- do.call(rbind, cloneproportionInfoList)
+      write.table(cloneproportionInfoDF, file = cloneproportionInfoFile, row.names = FALSE, quote = FALSE, sep = "\t")
+
+      ### writing output muttable - similar to input
+      input_tsv <- input_tsv %>% dplyr::rename(originalCLUSTER = CLUSTER)
+      if (is.null(nrow(sample_pyclone_tree$merge_clusters))) {
+        input_tsv <- input_tsv %>% dplyr::mutate(treeCLUSTER = originalCLUSTER)
+      } else {
+        input_tsv <- input_tsv %>% dplyr::mutate(treeCLUSTER = originalCLUSTER)
+        for (i in 1:nrow(sample_pyclone_tree$merged_clusters)) {
+          input_tsv$treeCLUSTER <- gsub(sample_pyclone_tree$merged_clusters[i, 1], sample_pyclone_tree$merged_clusters[i, 3], input_tsv$treeCLUSTER)
+        }
+      }
+      write.table(input_tsv, file = paste0(sample_pyclone_tree$parameters$generalSave, "treeTable.tsv"), row.names = FALSE, quote = FALSE, sep = "\t")
+
+      ### writing alternative trees summary metrics
+      altTreeInfoFile <- paste0(sample_pyclone_tree$parameters$generalSave, "alternativeTreeMetrics.txt")
+
+      altTreeInfoDF <- data.frame(treeID = seq(sample_pyclone_tree$graph_pyclone$alt_trees), stringsAsFactors = FALSE)
+      
+      altTreeInfoDF$sum_condition_error <- sapply(altTreeInfoDF$treeID, function(i) sample_pyclone_tree$graph_pyclone$alt_trees_sum_condition_error[i])
+      altTreeInfoDF$SCE_ranking <- match(altTreeInfoDF$sum_condition_error, sort(unique(altTreeInfoDF$sum_condition_error)))
+      altTreeInfoDF$lowest_SCE <- ifelse(altTreeInfoDF$sum_condition_error == min(altTreeInfoDF$sum_condition_error), 'Lowest SCE tree', 'Alternative tree')
+
+      altTreeInfoDF$edge_probability_score <- sapply(altTreeInfoDF$treeID, function(i) sample_pyclone_tree$graph_pyclone$alt_trees_edge_probability[i])
+      altTreeInfoDF$edge_probability_ranking <- match(altTreeInfoDF$edge_probability_score, rev(sort(unique(altTreeInfoDF$edge_probability_score))))
+      altTreeInfoDF$highest_edge_probability <- ifelse(altTreeInfoDF$edge_probability_score == max(altTreeInfoDF$edge_probability_score), 'Highest edge probability tree', 'Alternative tree')
+      write.table(altTreeInfoDF, file = altTreeInfoFile, row.names = FALSE, quote = FALSE, sep = "\t")
+
+    }
+}
+
+
 #' Input data preprocessing function
 #'
 #' This function takes the input tsv and formats the data to be compatible with
@@ -14,8 +170,7 @@
 #' @param out_dir A file path to the desired output directory
 #' @export treebuilding_preprocess
 
-treebuilding_preprocess <- function(input_table, prefix, out_dir)
-{
+treebuilding_preprocess <- function(input_table, prefix, out_dir) {
   cat('\n Preprocessing input data \n')
   # check if the correct columns are included
   required_cols <- c("CASE_ID", "SAMPLE", "CHR", "POS", "REF", "ALT", "CLUSTER", "CCF_PHYLO", "CCF_OBS", "MUT_COPY", "COPY_NUMBER_A", "COPY_NUMBER_B")
@@ -252,8 +407,7 @@ treebuilding_run <- function(sample_input_list
                                   , min_cluster_size = 5
                                   , run.multi.trees = TRUE
                                   , n_clusters_to_move = 5
-)
-{
+) {
   suppressPackageStartupMessages(require(igraph))
   suppressPackageStartupMessages(require(mapplots))
 
@@ -615,8 +769,7 @@ treebuilding_run <- function(sample_input_list
 #' @importFrom igraph "get.edgelist"
 #' @export treebuilding_plot
 
-treebuilding_plot <- function(sample_pyclone_tree)
-{
+treebuilding_plot <- function(sample_pyclone_tree) {
   cat('\n Plotting inferred phylogenetic tree \n')
   require(mapplots)
   sampleID  <-  sample_pyclone_tree$parameters$sampleID
