@@ -156,14 +156,6 @@ clustering_preprocess <- function(input_table, new.dir, subclonal_copy_correctio
         mut.table <- data.frame(mut.table, stringsAsFactors = FALSE)
     }
 
-    # if(TRUE%in%grepl('CN_A',colnames(input_table))) # KG:  delete - this shouldnt be needed if we have provided correct input columns.
-    # {
-    #   colnames(input_table) <- gsub("CN_A","COPY_NUMBER_A",colnames(input_table))
-    #   colnames(input_table) <- gsub("CN_B","COPY_NUMBER_B",colnames(input_table))
-    #   colnames(input_table) <- gsub("PURITY","ACF",colnames(input_table))
-      
-    # }
-
     seg.mat.copy <- data.frame(SampleID = input_table[,"SAMPLE"],
                                chr = input_table[, "CHR"],
                                startpos = input_table[, "POS"],
@@ -769,29 +761,6 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
 
     }
 
-    # if(ncol(mut.heatmap) > 1 & !all(mut.heatmap[1] == mut.heatmap)) {
-    #     pdf(paste(new.dir,patient, ".heatmap.pdf", sep = ""), height = 18, width = 10)
-    #     if (ncol(mut.heatmap) == 2) {
-    #         heatmap.2(mut.heatmap[order(as.numeric(rowSums(cbind(mut.heatmap[,1]+ifelse(mut.heatmap[,1]>0,2,0),mut.heatmap[,2]+ifelse(mut.heatmap[,1]>0,1,0)))),decreasing=TRUE),]
-    #         ,Rowv = FALSE
-    #         ,RowSideColors = ifelse(rownames(mut.heatmap)%in%muts.to.remove,'blue','yellow')
-    #         ,col=c('gray','blue')
-    #         ,margins=c(25,20)
-    #         ,trace='none'
-    #         )
-    #     }
-    #     if (ncol(mut.heatmap) > 2) {
-    #         heatmap.2(mut.heatmap,
-    #           ,RowSideColors = ifelse(rownames(mut.heatmap)%in%muts.to.remove,'blue','yellow')
-    #           ,col=c('gray','blue')
-    #           ,margins=c(25,20)
-    #           ,trace='none')
-    #     }
-
-    #     dev.off()
-    # }
-
-
     no.optima = length(unique(most.likely.cluster))
     max.cols = 12
     # require(RColorBrewer)
@@ -928,30 +897,8 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
     }
 
     if(length(regions.to.use) > 1) {
-      # pdf(paste(new.dir, patient, ".cluster.ccf.heatmap.pdf",sep = ""), height = 18, width = 10)
-      # heatmap.2(apply(heatmap.ccf,2,as.numeric),dendrogram = 'column'
-      #           ,Rowv = FALSE
-      #           ,RowSideColors=cols[match(most.likely.cluster[rownames(heatmap.ccf)], c(1:no.optima))]
-      #           ,col= colorpanel(100,'white','steelblue4')
-      #           ,margins=c(20,10)
-      #           ,trace='none'
-      #           ,key=FALSE
-      # )
-      # dev.off()
-      
-      
-      # pdf(paste(new.dir, patient, ".cpn.ccf.heatmap.pdf",sep = ""),height = 18,width=10)
-      # heatmap.2(apply(heatmap.ccf,2,as.numeric),dendrogram = 'column'
-      #           ,Rowv = FALSE
-      #           ,RowSideColors=ifelse(rownames(heatmap.ccf)%in%muts.to.remove,'red','gray')
-      #           ,col= colorpanel(100,'white','steelblue4')
-      #           ,margins=c(20,10)
-      #           ,trace='none'
-      #           ,key=FALSE
-      # )
-      # dev.off()
-      
-      # plot the clusters ####
+        ### plot heatmap
+        ### plot the clusters
       
       
       pdf(paste(new.dir, "/", patient, "_pyclone_cluster_assignment_ccf_dirty",".pdf",sep=""),height=4,width=4)
