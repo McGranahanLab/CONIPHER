@@ -2827,25 +2827,6 @@ merge.clusters <- function(nested_pyclone
   return(potential.merge)
 }
 
-# additional functions ####
-# PasteVector <- function(v,sep="")
-# {
-
-#   vt <- v[1];
-#   if(length(v) > 1){
-#     for(g in 2:length(v)){
-#       vt <- paste(vt,v[g],sep=sep)
-
-#     }
-#   }
-#   vt <- paste(vt," EnD",sep="");
-#   out.v <- sub(" EnD","",vt);
-#   out.v <- sub("NA , ","",out.v);
-#   out.v <- sub(" , NA","",out.v);
-#   out.v <- sub(" , NA , "," , ",out.v);
-#   return(out.v);
-# }
-
 trx_rename.fn <- function(trxid, trialID = 'LTX')
 {
   new_trxid <- as.character(trxid)
