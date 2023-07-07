@@ -3083,6 +3083,9 @@ get_tree_level <- function(tree_graph
 #' 'clonal' in a region to have CCF==100
 #' @param tree_id The tree index of the selected alternative tree for which you
 #' want to compute the clone proportions
+#' @returns clone_proportion_table, a matrix containing the clone proportions of
+#' each clone (rows) in each tumour sample (columns)
+#' @export compute_subclone_proportions
 compute_subclone_proportions <- function(tree_list
                                          , ccf_cluster_table
                                          , clonality_table
@@ -3178,4 +3181,104 @@ compute_subclone_proportions <- function(tree_list
     clone_proportion_table <- as.matrix(proportions_df[, region_IDs, drop = F])
   }
   return(clone_proportion_table)
+}
+
+
+
+#' Function to extract the terminal nodes of a phylogenetic tree
+#' @param tree_structure A matrix of a tree structure (edge matrix)
+#' @returns A vector of the terminal nodes in the tree
+#' @export get_terminal_clusters
+get_terminal_clusters <- function(tree_structure){
+  term_clusters <- tree_structure[, 2][!tree_structure[, 2] %in% tree_structure[, 1]]
+  # if tree is a clonal tree (ie no subclones), return the clonal cluster
+  if (length(unique(as.numeric(tree_structure))) == 1){
+    term_clusters <- as.character(unique(as.numeric(tree_structure)))
+  }
+  return(as.character(term_clusters))
+}
+
+
+
+#' Function to extract the terminal nodes of a phylogenetic tree
+#' @param ccf_table_pyclone_clean A mutation table with PhyloCCF values. This
+#' table is an item in the R list object list sample_pyclone_tree, which is the
+#' output of the CONIPHER treebuilding_run() function.
+#' @importFrom data.table ":="
+process_mean_cluster_ccfs <- function(ccf_table_pyclone_clean){
+  require(data.table)
+
+  ccf_table_pyclone_clean_df <- as.data.frame(ccf_table_pyclone_clean)
+
+  phylo_ccf_columns <- colnames(ccf_table_pyclone_clean)[grep('PhyloCCF', colnames(ccf_table_pyclone_clean))]
+  samples <- gsub('_PhyloCCF', '', phylo_ccf_columns)
+
+  mean_ccf_dt <- data.table::as.data.table(ccf_table_pyclone_clean[, c(phylo_ccf_columns, 'PycloneCluster')])
+  mean_ccf_dt[, (samples) := lapply(.SD, mean), by = PycloneCluster, .SDcols = phylo_ccf_columns]
+  mean_ccf_df <- as.data.frame(mean_ccf_dt)
+  meanCCF_cols <- c(samples, 'PycloneCluster')
+
+  mean_ccf_dt <- unique(as.data.table(mean_ccf_df[, meanCCF_cols]))
+  setorder(mean_ccf_dt, 'PycloneCluster')
+  mean_ccf_cluster_table <- as.data.frame(mean_ccf_dt)
+
+  rownames(mean_ccf_cluster_table) <- mean_ccf_cluster_table$PycloneCluster
+  mean_ccf_cluster_table <- as.matrix(mean_ccf_cluster_table[, samples, drop = FALSE])
+
+  return(mean_ccf_cluster_table * 100)
+}
+
+
+
+#' Function to compute subclonal expansion score on a selected alternative tree,
+#' on a tumour sample and whole tumour level.
+#' The subclonal expansion score for each tumour sample is computed as the
+#' maximum CCF of any of the terminal (leaf) nodes present in that tumour sample.
+#' Note, for multi-sample cases, there may exist a sample with no terminal nodes
+#' present, in which case the subclonal expansion score for this sample is set
+#' to 0. The tumour level subclonal expansion score is taken as the maximum
+#' subclonal expansion score across tumour samples.
+#' @param tree_list A list of tree matrices
+#' @param tree_id The tree index of the selected alternative tree for which you
+#' want to compute the subclonal expansion score
+#' @param ccf_table_pyclone_clean The output mutation PhyloCCF data frame that is
+#' computed as part of CONIPHER tree building
+#' @returns subclonal_exp_score_df, a data frame with the subclonal expansion
+#' score computed for each tumour sample (column subclonal_expansion_score),
+#' and across the whole tumour (column subclonal_expansion_score_tumour).
+#' each clone (rows) in each tumour sample (columns)
+#' @export compute_subclonal_expansion_score
+compute_subclonal_expansion_score <- function(tree_list
+                                              , tree_id
+                                              , ccf_table_pyclone_clean){
+
+  phylo_ccf_columns <- colnames(ccf_table_pyclone_clean)[grep('PhyloCCF', colnames(ccf_table_pyclone_clean))]
+  samples <- gsub('_PhyloCCF', '', phylo_ccf_columns)
+
+  tree_structure <- tree_list[[tree_id]]
+
+  # Re-compute the mean CCF cluster table from mutation CCFs (to get cluster CCFs not truncated to 2s.f.)
+  mean_ccf_cluster_table <- process_mean_cluster_ccfs(ccf_table_pyclone_clean)
+
+  # Get the ccfs of terminal nodes
+  term_clusters <- get_terminal_clusters(tree_structure)
+  terminal_ccf_cluster_table <- mean_ccf_cluster_table[rownames(mean_ccf_cluster_table) %in% term_clusters, , drop = FALSE]
+
+  # Compute max terminal CCF for each region (as fraction, not percentage)
+  max_ccf_terminal_in_regs <- apply(terminal_ccf_cluster_table, 2, max)/100
+
+  # check whether tumour is clonal
+  if (length(unique(as.numeric(tree_structure))) == 1){
+    max_ccf_terminal_in_regs <- 1 * (max_ccf_terminal_in_regs == max_ccf_terminal_in_regs)
+  }
+
+  # Cap at 1:
+  max_ccf_terminal_in_regs[max_ccf_terminal_in_regs > 1] <- 1
+
+  # Convert to output dataframe
+  subclonal_exp_score_df <- data.frame(sample = names(max_ccf_terminal_in_regs),
+                                       subclonal_expansion_score = max_ccf_terminal_in_regs)
+  subclonal_exp_score_df$subclonal_expansion_score_tumour <- max(subclonal_exp_score_df$subclonal_expansion_score)
+
+  return(subclonal_exp_score_df)
 }

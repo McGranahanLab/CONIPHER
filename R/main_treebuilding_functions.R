@@ -79,12 +79,12 @@ conipher_treebuilding <- function(input_tsv_loc,
       if ("alt_trees" %in% names(sample_pyclone_tree$graph_pyclone)) {
         write.table(paste0("### ", length(sample_pyclone_tree$graph_pyclone$alt_trees), " trees"), file = treeFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
         tmp <- sapply(seq(1, length(sample_pyclone_tree$graph_pyclone$alt_trees)), function(x) {
-            write.table(paste0("# tree ", x), file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")  
+            write.table(paste0("# tree ", x), file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
             write.table(sample_pyclone_tree$graph_pyclone$alt_trees[[x]], file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
         })
       } else {
         write.table(paste0("### ", 1, " trees"), file = treeFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
-        write.table(paste0("# tree ", 1), file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")  
+        write.table(paste0("# tree ", 1), file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
         write.table(sample_pyclone_tree$graph_pyclone$default_tree, file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
       }
 
@@ -95,7 +95,7 @@ conipher_treebuilding <- function(input_tsv_loc,
       ### writing consensus relationships
       consensusRelationshipsFile <- paste0(sample_pyclone_tree$parameters$generalSave, "consensusRelationships.txt")
       write.table(Reduce(rbind, strsplit(sample_pyclone_tree$graph_pyclone$consensus_relationships, split = ":")), file = consensusRelationshipsFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
-      
+
       ### writing cluster information
       clusterInfoFile <- paste0(sample_pyclone_tree$parameters$generalSave, "clusterInfo.txt")
 
@@ -110,7 +110,7 @@ conipher_treebuilding <- function(input_tsv_loc,
       clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$nested_pyclone$ccf_ci_upper, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "CCF_CI_high"), by = c("clusterID", "Region"))
       clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$clonality_out$clonality_table_corrected, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "clonality"), by = c("clusterID", "Region"))
       clusterInfoDF <- clusterInfoDF %>% dplyr::full_join(data.frame(sample_pyclone_tree$clone_proportion_out$clone_proportion_table, stringsAsFactors = FALSE) %>% dplyr::mutate(clusterID = rownames(.)) %>% tidyr::pivot_longer(!clusterID, names_to = "Region", values_to = "clone_proportions_default"), by = c("clusterID", "Region"))
-      
+
       clusterInfoDF <- clusterInfoDF %>% dplyr::rename(SAMPLE = Region)
       write.table(clusterInfoDF, file = clusterInfoFile, row.names = FALSE, quote = FALSE, sep = "\t")
 
@@ -128,6 +128,19 @@ conipher_treebuilding <- function(input_tsv_loc,
       cloneproportionInfoDF <- do.call(rbind, cloneproportionInfoList)
       write.table(cloneproportionInfoDF, file = cloneproportionInfoFile, row.names = FALSE, quote = FALSE, sep = "\t")
 
+      ### writing subclonal expansion score data
+      subcloneExpansionInfoFile <- paste0(sample_pyclone_tree$parameters$generalSave, "subclonalExpansionScoreMinErrorTrees.txt")
+
+      ses_min_sce_trees <- sample_pyclone_tree$subclonal_expansion_score_out$subclonal_exp_score_min_sce_trees
+      subcloneExpansionInfoList <- lapply(seq(ses_min_sce_trees), function(i){
+        tree_id <- names(ses_min_sce_trees)[i]
+        ses_table <- data.frame(ses_min_sce_trees[[i]], stringsAsFactors = FALSE)
+        ses_table$treeID <- tree_id
+        return(ses_table)
+      })
+      subcloneExpansionInfoDF <- do.call(rbind, subcloneExpansionInfoList)
+      write.table(subcloneExpansionInfoDF, file = subcloneExpansionInfoFile, row.names = FALSE, quote = FALSE, sep = "\t")
+
       ### writing output muttable - similar to input
       input_tsv <- input_tsv %>% dplyr::rename(originalCLUSTER = CLUSTER)
       if (is.null(nrow(sample_pyclone_tree$merge_clusters))) {
@@ -144,7 +157,7 @@ conipher_treebuilding <- function(input_tsv_loc,
       altTreeInfoFile <- paste0(sample_pyclone_tree$parameters$generalSave, "alternativeTreeMetrics.txt")
 
       altTreeInfoDF <- data.frame(treeID = seq(sample_pyclone_tree$graph_pyclone$alt_trees), stringsAsFactors = FALSE)
-      
+
       altTreeInfoDF$sum_condition_error <- sapply(altTreeInfoDF$treeID, function(i) sample_pyclone_tree$graph_pyclone$alt_trees_sum_condition_error[i])
       altTreeInfoDF$SCE_ranking <- match(altTreeInfoDF$sum_condition_error, sort(unique(altTreeInfoDF$sum_condition_error)))
       altTreeInfoDF$lowest_SCE <- ifelse(altTreeInfoDF$sum_condition_error == min(altTreeInfoDF$sum_condition_error), 'Lowest SCE tree', 'Alternative tree')
@@ -389,7 +402,7 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir) {
 #' cluster to be included in analysis? (default=5)
 #' @param run.multi.trees Should alternative tumour phylogenies be explored?
 #' (default=TRUE)
-#' @param n_clusters_to_move When running multiple trees specify the maximum 
+#' @param n_clusters_to_move When running multiple trees specify the maximum
 #' number of clusters to attempt moving. (default=5)
 #' @returns sample_pyclone_tree, an R list object containing output information
 #' from CONIPHER tree building
@@ -737,18 +750,37 @@ treebuilding_run <- function(sample_input_list
   clone_proportion_out <- list(clone_proportion_table = clone_proportion_table, clone_proportions_min_sce_trees = clone_proportions_min_sce_trees)
 
 
+  ### Compute subclonal expansion score:
+  # 1) Compute subclonal expansion score from default tree:
+  cat('\n\nComputing subclonal expansion score from default tree\n')
+  subclonal_exp_score <- compute_subclonal_expansion_score(tree_list = graph_pyclone$alt_trees,
+                                                           tree_id = 1,
+                                                           ccf_table_pyclone_clean = output_list$ccf_table_pyclone_clean)
+
+  # 2) Compute subclonal expansion score from lowest error tree:
+  cat('\n\nComputing subclonal expansion score from tree with lowest sum condition error\n')
+  subclonal_exp_score_min_sce_trees <- lapply(graph_pyclone$min_sce_trees, function(i){
+    compute_subclonal_expansion_score(tree_list = graph_pyclone$alt_trees,
+                                      tree_id = as.numeric(i),
+                                      ccf_table_pyclone_clean = output_list$ccf_table_pyclone_clean)
+
+  })
+  subclonal_exp_score_out <- list(subclonal_exp_score = subclonal_exp_score, subclonal_exp_score_min_sce_trees = subclonal_exp_score_min_sce_trees)
+
+
   ### Finally, save all tree output
   # Save sample ID
   graph_pyclone$sampleID  <- sampleID
   graph_pyclone$long_sampleID  <- trx_rename.fn(sampleID, trialID = prefix)
 
   # Saving all output to list
-  output_list$graph_pyclone                          <- graph_pyclone
-  output_list$parameters                             <- input_parameter_list
-  output_list$nested_pyclone                         <- nested_pyclone
-  output_list$clonality_table                        <- clonality_table
-  output_list$clonality_out                          <- clonality_out
-  output_list$clone_proportion_out                   <- clone_proportion_out
+  output_list$graph_pyclone                           <- graph_pyclone
+  output_list$parameters                              <- input_parameter_list
+  output_list$nested_pyclone                          <- nested_pyclone
+  output_list$clonality_table                         <- clonality_table
+  output_list$clonality_out                           <- clonality_out
+  output_list$clone_proportion_out                    <- clone_proportion_out
+  output_list$subclonal_expansion_score_out           <- subclonal_exp_score_out
 
   #let's save the output_list
   output_rds <- file.path(generalSave, paste0(sampleID, ".tree.RDS"))

@@ -30,6 +30,10 @@ each tumour region}
 \item{tree_id}{The tree index of the selected alternative tree for which you
 want to compute the clone proportions}
 }
+\value{
+clone_proportion_table, a matrix containing the clone proportions of
+each clone (rows) in each tumour sample (columns)
+}
 \description{
 Function to compute clone proportions on a selected alternative tree structure
 }

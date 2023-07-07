@@ -53,7 +53,7 @@ cluster to be included in analysis? (default=5)}
 \item{run.multi.trees}{Should alternative tumour phylogenies be explored?
 (default=TRUE)}
 
-\item{n_clusters_to_move}{When running multiple trees specify the maximum 
+\item{n_clusters_to_move}{When running multiple trees specify the maximum
 number of clusters to attempt moving. (default=5)}
 }
 \value{
