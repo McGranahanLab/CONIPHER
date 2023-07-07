@@ -1,7 +1,7 @@
 Package: CONIPHER
 Type: Package
 Title: R package for tumour phylogenetic tree reconstruction
-Version: 0.2.0
+Version: 2.1.0
 Author: Nicholas McGranahan
 Maintainers: Kristiana Grigoriadis <kristiana.grigoriadis.19@ucl.ac.uk>; Ariana Huebner <ariana.huebner.16@ucl.ac.uk>
 Description: CONIPHER is an R package for clustering mutation data and reconstruction of tumour phylogenetic 
@@ -29,7 +29,7 @@ Imports:
     gplots
 Suggests:
     devtools
-License: XXX
+License: use_bsd3clause_license()
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3

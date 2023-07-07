@@ -28,7 +28,7 @@ conipher_clustering <- function(case_id,
     new.dir              <- paste0(out_dir, "/Clustering/")
     driver_cat           <- unlist(strsplit(driver_filter, split = ","))
     if (is.null(pyclone_yaml_loc)) {
-        template.config.yaml <- system.file("extdata", "template.config.yaml", package = "CONIPHERclustering", mustWork = TRUE)
+        template.config.yaml <- system.file("extdata", "template.config.yaml", package = "CONIPHER", mustWork = TRUE)
     } else {
         if (file.exists(pyclone_yaml_loc)) {
             template.config.yaml <- pyclone_yaml_loc

@@ -450,11 +450,11 @@ grow.trees <- function(nestedlist
   tlevels <- check.levels.ccf(directedGraph_input_pruned_unfolded, ccf_ci_lower, trunk_cluster)
 
   outlist <- list(directedGraph_input_pruned_unfolded, original_tree, c(clusters_to_remove), tlevels, nclusters, trunk_cluster)
-  names(outlist) <- c('Corrected_tree', 'Original_tree', 'Clusters_with_issues', 'ccf_per_level', 'edgelength', 'trunk')
+  names(outlist) <- c('default_tree', 'Original_tree', 'Clusters_with_issues', 'ccf_per_level', 'edgelength', 'trunk')
 
   if (any(class(ccf_cluster_table) != "numeric")) {
     if (nrow(ccf_cluster_table) == 1) {
-      outlist <- list(Corrected_tree = matrix(as.character(c(1, 1)), ncol = 2, byrow = T), 'Original_tree' = matrix(as.character(c(1, 1)), ncol = 2, byrow = T), 'Clusters_with_issues' = NA, 'ccf_per_level' = NA, 'edgelength' = setNames(cluster_qc[1, 1], rownames(ccf_cluster_table)[1]), 'trunk' = rownames(ccf_cluster_table)[1])
+      outlist <- list(default_tree = matrix(as.character(c(1, 1)), ncol = 2, byrow = T), 'Original_tree' = matrix(as.character(c(1, 1)), ncol = 2, byrow = T), 'Clusters_with_issues' = NA, 'ccf_per_level' = NA, 'edgelength' = setNames(cluster_qc[1, 1], rownames(ccf_cluster_table)[1]), 'trunk' = rownames(ccf_cluster_table)[1])
     }}
 
   options(expressions=expressionsoptions)
@@ -684,7 +684,7 @@ correct.clonality.table <- function(clonality_table,graph_pyclone,trunk_cluster)
 
   if (nrow(clonality_table) != 1 & ncol(clonality_table) != 1) {
 
-    tmp <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$Corrected_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
+    tmp <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$default_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
     if(length(tmp)==0)
     {
       out <- list()
@@ -710,13 +710,13 @@ correct.clonality.table <- function(clonality_table,graph_pyclone,trunk_cluster)
     }
 
     corrected.clusters <- unique(corrected.clusters)
-    test.tree <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$Corrected_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
+    test.tree <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$default_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
     badtransition.present          <- TRUE%in%ifelse(grep('badtransition',test.tree)>0,TRUE,FALSE)
     multipleclonalbranches.present <- TRUE%in%ifelse(grep('multipleclonalbranches',test.tree)>0,TRUE,FALSE)
     k <- 1
     while((badtransition.present%in%TRUE|multipleclonalbranches.present%in%TRUE)&k<50)
     {
-      tmp1 <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$Corrected_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
+      tmp1 <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$default_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
       tmp2 <- grep("badtransition",tmp1,value=TRUE)
       corrected.clusters2 <- corrected.clusters
 
@@ -795,7 +795,7 @@ correct.clonality.table <- function(clonality_table,graph_pyclone,trunk_cluster)
 
 
       corrected.clusters <- corrected.clusters2
-      test.tree <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$Corrected_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
+      test.tree <- tree.structure.adjust.clonality(tree.structure = graph_pyclone$default_tree,trunk = trunk_cluster,clonality.called.cluster.region.df = clonality_table)
       badtransition.present          <- TRUE%in%ifelse(grep('badtransition',test.tree)>0,TRUE,FALSE)
       multipleclonalbranches.present <- TRUE%in%ifelse(grep('multipleclonalbranches',test.tree)>0,TRUE,FALSE)
       k <- k+1
@@ -829,13 +829,13 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
   ccf_cluster_table <- nestedlist[[4]]
   cluster_qc        <- nestedlist[[5]]
 
-  nestedclust <- nestedclust[,colnames(nestedclust)%in%unique(c(graph_pyclone$Corrected_tree)),drop=FALSE]
-  nestedclust <- nestedclust[rownames(nestedclust)%in%unique(c(graph_pyclone$Corrected_tree)),,drop=FALSE]
+  nestedclust <- nestedclust[,colnames(nestedclust)%in%unique(c(graph_pyclone$default_tree)),drop=FALSE]
+  nestedclust <- nestedclust[rownames(nestedclust)%in%unique(c(graph_pyclone$default_tree)),,drop=FALSE]
 
   trunk_cluster       <- graph_pyclone$trunk
   max_per_level       <- max(max(ccf_ci_upper[trunk_cluster,])+ccf_buffer,100+ccf_buffer)
 
-  non_trunk_clusters  <- c(graph_pyclone$Corrected_tree)[!c(graph_pyclone$Corrected_tree)%in%trunk_cluster]
+  non_trunk_clusters  <- c(graph_pyclone$default_tree)[!c(graph_pyclone$default_tree)%in%trunk_cluster]
   non_trunk_clusters  <- unique(non_trunk_clusters[order(as.numeric(non_trunk_clusters),decreasing = FALSE)])
 
   # for altering the tree (I don't include the CCF allowance)
@@ -884,7 +884,7 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
   cat('\npotential combinations of trees to remove calculated')
   # now we know some of potential number of trees, let's see how many of these don't break the rules
   trees               <-  list()
-  trees[["original"]]$tree    <- graph_pyclone$Corrected_tree
+  trees[["original"]]$tree    <- graph_pyclone$default_tree
   trees[["original"]]$maxccf  <- max(graph_pyclone$ccf_per_level[[1]])
   trees[["original"]]$nesting <- nestedclust
   #next add all the double trees
@@ -894,7 +894,7 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
   for (cluster in clusters_with_potential_to_move)
   {
     nesting.to.remove <- names(which(c(nestedclust[cluster,]-strict_nestedclust[cluster,])==1))
-    expanded_tree     <- expand.tree(graph_pyclone$Corrected_tree,trunk_cluster)
+    expanded_tree     <- expand.tree(graph_pyclone$default_tree,trunk_cluster)
 
     nesting.to.remove <- nesting.to.remove[paste(nesting.to.remove,cluster,sep=":")%in%paste(expanded_tree[,1],expanded_tree[,2],sep=":")]
 
@@ -903,7 +903,7 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
     nestedclust_full[cluster,] <- 0
     nestedclust_full[cluster,expanded_tree[expanded_tree[,2]==cluster,1]] <- 1
     keycluster        <- cluster
-    old.tree          <- graph_pyclone$Corrected_tree
+    old.tree          <- graph_pyclone$default_tree
 
     k <- 1
     for (cluster1 in nesting.to.remove)
@@ -957,11 +957,11 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
       other.clusters <- nesting.to.remove[!nesting.to.remove%in%cluster1]
       for (cluster2 in other.clusters)
       {
-        if(on.same.branch(cluster1,cluster2,graph_pyclone$Corrected_tree,trunk_cluster))
+        if(on.same.branch(cluster1,cluster2,graph_pyclone$default_tree,trunk_cluster))
         {
           next;
         }
-        if(!on.same.branch(cluster1,cluster2,graph_pyclone$Corrected_tree,trunk_cluster))
+        if(!on.same.branch(cluster1,cluster2,graph_pyclone$default_tree,trunk_cluster))
         {
           nestedclust_test[keycluster,cluster2] <- 0
           nesting.removed <- c(nesting.removed,paste(cluster2,keycluster,sep=":"))
@@ -1051,11 +1051,11 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
             other.clusters <- nesting.to.remove[!nesting.to.remove%in%cluster1]
             for (cluster2 in other.clusters)
             {
-              if(on.same.branch(cluster1,cluster2,graph_pyclone$Corrected_tree,trunk_cluster))
+              if(on.same.branch(cluster1,cluster2,graph_pyclone$default_tree,trunk_cluster))
               {
                 next;
               }
-              if(!on.same.branch(cluster1,cluster2,graph_pyclone$Corrected_tree,trunk_cluster))
+              if(!on.same.branch(cluster1,cluster2,graph_pyclone$default_tree,trunk_cluster))
               {
                 nestedclust_test[keycluster,cluster2] <- 0
                 nesting.removed <- c(nesting.removed,paste(cluster2,keycluster,sep=":"))
@@ -1305,7 +1305,7 @@ prep_pyclone_tree.fn <- function(graph_pyclone
   auto_edgelength <- graph_pyclone$edgelength
   trunk <- graph_pyclone$trunk
   auto_mean_pyclone_ccf <- nested_pyclone$ccf_cluster_table
-  auto_tree <- graph_pyclone$Corrected_tree
+  auto_tree <- graph_pyclone$default_tree
   tree <- edgelength <- ccf_cluster_table <- merged_clusters <- NA
   if (!is.null(correct_tree)) {
     if (sampleid %in% names(correct_tree)) {

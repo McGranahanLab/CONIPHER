@@ -85,7 +85,7 @@ conipher_treebuilding <- function(input_tsv_loc,
       } else {
         write.table(paste0("### ", 1, " trees"), file = treeFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
         write.table(paste0("# tree ", 1), file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")  
-        write.table(sample_pyclone_tree$graph_pyclone$Corrected_tree, file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+        write.table(sample_pyclone_tree$graph_pyclone$default_tree, file = treeFile, append = TRUE, row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
       }
 
       ### writing consensus branches
@@ -101,7 +101,7 @@ conipher_treebuilding <- function(input_tsv_loc,
 
       clusterInfoDF <- data.frame(clusterID = names(sample_pyclone_tree$graph_pyclone$edgelength), stringsAsFactors = FALSE)
       clusterInfoDF$truncal <- ifelse(clusterInfoDF$clusterID %in% sample_pyclone_tree$graph_pyclone$trunk, TRUE, FALSE)
-      clusterInfoDF$treeClust <- ifelse(clusterInfoDF$clusterID %in% unique(c(sample_pyclone_tree$graph_pyclone$Corrected_tree)), TRUE, FALSE)
+      clusterInfoDF$treeClust <- ifelse(clusterInfoDF$clusterID %in% unique(c(sample_pyclone_tree$graph_pyclone$default_tree)), TRUE, FALSE)
       clusterInfoDF$cpnRemClust <- ifelse(clusterInfoDF$clusterID %in% sample_pyclone_tree$cpn_removed_clusters, TRUE, FALSE)
       clusterInfoDF$nMuts <- as.numeric(sample_pyclone_tree$graph_pyclone$edgelength)
 
@@ -659,13 +659,13 @@ treebuilding_run <- function(sample_input_list
 
   if(length(multi.trees)==0)
   {
-    graph_pyclone$consensus_branches <- paste(graph_pyclone$Corrected_tree[,1],graph_pyclone$Corrected_tree[,2],sep=":")
+    graph_pyclone$consensus_branches <- paste(graph_pyclone$default_tree[,1],graph_pyclone$default_tree[,2],sep=":")
     graph_pyclone$nested_clust       <- nested_pyclone[[1]]
 
     # list all clone - clone relationships which are common to all alternative trees
     # This captures some tree info for clones where the exact tree position is uncertain
-    graph_pyclone$consensus_relationships <- extract_consensus_relationships( list(graph_pyclone$Corrected_tree ) )
-    graph_pyclone$alt_trees <- list(graph_pyclone$Corrected_tree)
+    graph_pyclone$consensus_relationships <- extract_consensus_relationships( list(graph_pyclone$default_tree ) )
+    graph_pyclone$alt_trees <- list(graph_pyclone$default_tree)
   }
 
   if(length(multi.trees)!=0)
@@ -871,7 +871,7 @@ treebuilding_plot <- function(sample_pyclone_tree) {
     plot.new()
     par(mar=c(2.1, 2.1, 4.1, 38), xpd=TRUE)
 
-    g <- graph.data.frame(pyclone_tree$Corrected_tree,directed = FALSE)
+    g <- graph.data.frame(pyclone_tree$default_tree,directed = FALSE)
     indx <- V(g)$name
     vcol <- setNames(color.tree(pyclone_tree$edgelength), names(pyclone_tree$edgelength))[indx]
 
@@ -902,7 +902,7 @@ treebuilding_plot <- function(sample_pyclone_tree) {
     })
 
 
-    g_dir <- graph.data.frame(pyclone_tree$Corrected_tree,directed = TRUE)
+    g_dir <- graph.data.frame(pyclone_tree$default_tree,directed = TRUE)
     edges <- get.edgelist(g_dir)
     ecol <- setNames(rep('#bdbdbd', nrow(edges)),edges[,2])# baseline, set edge color to black
     ewidth <- rep(1,length(ecol))
