@@ -550,6 +550,7 @@ treebuilding_run <- function(sample_input_list
                                ,test_pyclone_absolute = test_pyclone_absolute
                                ,nested_pyclone = nested_pyclone
                                ,nested_pyclone_absolute = nested_pyclone_absolute
+                               ,prefix = prefix
                                ,min_ccf = min_ccf
                                ,p_value_cut = pval_cutoff
                                ,min_cluster_size = min_cluster_size

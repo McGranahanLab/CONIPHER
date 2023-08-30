@@ -824,7 +824,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
         dplyr::mutate(CHR = as.numeric(sapply(strsplit(unlist(output_tsv$mutation_id), split = ":"), function(x) x[2])),
                       POS = as.numeric(sapply(strsplit(unlist(output_tsv$mutation_id), split = ":"), function(x) x[3])),
                       key = paste(paste0("chr", CHR), POS, REF, ALT, sep = ":")) %>%
-        dplyr::left_join(input_tsv %>% dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, DEPTH, ACF, PLOIDY), by = c("CHR", "POS", "REF", "ALT", "SAMPLE")) %>%
+        dplyr::left_join(input_tsv %>% dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, DEPTH, ACF, PLOIDY) %>% mutate(CHR = as.numeric(CHR), POS = as.numeric(POS)), by = c("CHR", "POS", "REF", "ALT", "SAMPLE")) %>%
         dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, REF_COUNT, VAR_COUNT, DEPTH, CLUSTER, CCF_PHYLO, CCF_OBS, MUT_COPY, COPY_NUMBER_A, COPY_NUMBER_B, ACF, PLOIDY, CLEAN, phyloCCF.0.05, phyloCCF.0.95)
 
     write.table(output_tsv %>% dplyr::select(-phyloCCF.0.05, -phyloCCF.0.95), file = paste0(new.dir, patient, ".SCoutput.FULL.tsv"), row.names = FALSE, quote = FALSE, sep = "\t")
