@@ -25,7 +25,7 @@ conipher_clustering <- function(case_id,
                                 nProcs = 1,
                                 ...) {
     patient              <- case_id
-    new.dir              <- paste0(out_dir, "/Clustering/")
+    new.dir              <- paste0(out_dir, "/")
     driver_cat           <- unlist(strsplit(driver_filter, split = ","))
     if (is.null(pyclone_yaml_loc)) {
         template.config.yaml <- system.file("extdata", "template.config.yaml", package = "CONIPHER", mustWork = TRUE)

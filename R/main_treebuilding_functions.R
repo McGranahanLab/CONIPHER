@@ -24,7 +24,7 @@ conipher_treebuilding <- function(input_tsv_loc,
                                   min_cluster_size = 5,
                                   multi_trees = TRUE,
                                   ...) {
-    out_dir         <- paste0(out_dir, "/Trees/")
+    out_dir         <- paste0(out_dir, "/")
 
     # cat("\nCONIPHER tree building analysis of the following tumour case:\n")
     # print(patient)
