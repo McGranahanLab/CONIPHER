@@ -55,6 +55,9 @@ conipher_clustering <- function(case_id,
         stop('No mutations passed filtering, stopping PyClone phylo clustering')
     }
 
+    ### fix issue with sample names including '-'
+    input_tsv$SAMPLE  <- gsub("-", "\\.", input_tsv$SAMPLE)
+
     input_list     <- clustering_preprocess(input_tsv, new.dir = new.dir, subclonal_copy_correction = subclonal_copy_correction, multiple_test_correction = multiple_test_correction, only_truncal_subclonal_copy_correction = only_truncal_subclonal_copy_correction, fix_absentCCFs = fix_absentCCFs)
     sample.results <- clustering_run(input_list, nProcs = nProcs, new.dir = new.dir, burn_in = burn_in, pyclone_seed = seed, template.config.yaml = template.config.yaml)
     clustering_postprocess(input_list, sample.results, new.dir = new.dir, input_tsv = input_tsv, input_seg_tsv_loc = input_seg_tsv_loc, min_cluster_size = min_cluster_size, driver_cat = driver_cat, clean_clusters = clean_clusters, min_ccf_present = 0.1, clonal_cutOff = clonal_cutOff, propClonal_threshold = propClonal_threshold)
@@ -644,6 +647,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                 if (!is.null(input_seg_tsv_loc)) {
                     print("Using specified seg file for plotting")
                     region.seg.copy     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = FALSE)
+                    region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
                     # If providing seg file, ensure the sample names match the sample names in input tsv
                     if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
@@ -709,6 +713,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                 if (!is.null(input_seg_tsv_loc)) {
                     print("Using specified seg file for plotting")
                     region.seg.copy     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = FALSE)
+                    region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
                     # If providing seg file, ensure the sample names match the sample names in input tsv
                     if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[, 1]))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
@@ -982,6 +987,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
     if (!is.null(input_seg_tsv_loc)) {
         print("Using specified seg file for plotting")
         seg.mat.copy.plot     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = F)
+        seg.mat.copy.plot$SAMPLE <- gsub("-", "\\.", seg.mat.copy.plot$SAMPLE)
         # If providing seg file, ensure the sample names match the sample names in input tsv
         if (!any(unique(seg.mat.copy.plot$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
             stop('Sample IDs do not match between input_tsv and input_seg_tsv')
