@@ -650,12 +650,12 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                     region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
                     region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
                     region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
-                    region.seg.copy$PLOIDY        <- as.numeric(region.seg.copy$PLOIDY)
-                    region.seg.copy$ACF           <- as.numeric(region.seg.copy$ACF)
+                    region.seg.copy$CHR           <- as.numeric(region.seg.copy$CHR)
+                    region.seg.copy$STARTPOS      <- as.numeric(region.seg.copy$STARTPOS)
                     
                     #Sort by start position within chromosome
                     region.seg.copy <- region.seg.copy[order(region.seg.copy$CHR,
-                                                             region.seg.copy$startpos), ]
+                                                             region.seg.copy$STARTPOS), ]
                     # If providing seg file, ensure the sample names match the sample names in input tsv
                     if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
@@ -724,12 +724,12 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                     region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
                     region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
                     region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
-                    region.seg.copy$PLOIDY        <- as.numeric(region.seg.copy$PLOIDY)
-                    region.seg.copy$ACF           <- as.numeric(region.seg.copy$ACF)
+                    region.seg.copy$CHR           <- as.numeric(region.seg.copy$CHR)
+                    region.seg.copy$STARTPOS      <- as.numeric(region.seg.copy$STARTPOS)
                     
                     #Sort by start position within chromosome
                     region.seg.copy <- region.seg.copy[order(region.seg.copy$CHR,
-                                                             region.seg.copy$startpos), ]
+                                                             region.seg.copy$STARTPOS), ]
                     # If providing seg file, ensure the sample names match the sample names in input tsv
                     if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[, 1]))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
@@ -1006,12 +1006,12 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
         seg.mat.copy.plot$SAMPLE <- gsub("-", "\\.", seg.mat.copy.plot$SAMPLE)
         seg.mat.copy.plot$COPY_NUMBER_A <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_A)
         seg.mat.copy.plot$COPY_NUMBER_B <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_B)
-        seg.mat.copy.plot$PLOIDY        <- as.numeric(seg.mat.copy.plot$PLOIDY)
-        seg.mat.copy.plot$ACF           <- as.numeric(seg.mat.copy.plot$ACF)
+        seg.mat.copy.plot$CHR           <- as.numeric(seg.mat.copy.plot$CHR)
+        seg.mat.copy.plot$STARTPOS      <- as.numeric(seg.mat.copy.plot$STARTPOS)
         
         #Sort by start position within chromosome
         seg.mat.copy.plot <- seg.mat.copy.plot[order(seg.mat.copy.plot$CHR,
-                                                     seg.mat.copy.plot$startpos), ]
+                                                     seg.mat.copy.plot$STARTPOS), ]
         # If providing seg file, ensure the sample names match the sample names in input tsv
         if (!any(unique(seg.mat.copy.plot$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
             stop('Sample IDs do not match between input_tsv and input_seg_tsv')
