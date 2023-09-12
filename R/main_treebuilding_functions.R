@@ -766,6 +766,7 @@ treebuilding_run <- function(sample_input_list
                                       ccf_table_pyclone_clean = output_list$ccf_table_pyclone_clean)
 
   })
+  names(subclonal_exp_score_min_sce_trees) <- graph_pyclone$min_sce_trees
   subclonal_exp_score_out <- list(subclonal_exp_score = subclonal_exp_score, subclonal_exp_score_min_sce_trees = subclonal_exp_score_min_sce_trees)
 
 
