@@ -400,7 +400,7 @@ clustering_run <- function(input_list, nProcs, new.dir, burn_in, pyclone_seed, t
         if (length(x$MutationsWithCluster) < 5) {
             CreateOutputNoPyCloneRun(clusterName = x$clusterID, patientID = patient, SmallClusters = simpleClusterList, patientDirToUse = new.dir)
         } else {
-            RunPyCloneWithSimpleClusters(clusterName = x$clusterID, patientID = patient, SmallClusters = simpleClusterList, patientDirToUse = new.dir, yamlConfigLoc = template.config.yaml, pyclone.burnin = burn_in, pyclone.seed = pyclone_seed, run.pyclone = TRUE, pyclone.module = "PyClone/0.12.3-foss-2016b-Python-2.7.12-tkinter")
+            RunPyCloneWithSimpleClusters(clusterName = x$clusterID, patientID = patient, seg.mat = input_list$seg.mat.copy, SmallClusters = simpleClusterList, patientDirToUse = new.dir, yamlConfigLoc = template.config.yaml, pyclone.burnin = burn_in, pyclone.seed = pyclone_seed, run.pyclone = TRUE, pyclone.module = "PyClone/0.12.3-foss-2016b-Python-2.7.12-tkinter")
         }
     }, mc.cores = no_cores)
     rm(list = c("no_cores", "tmp"))

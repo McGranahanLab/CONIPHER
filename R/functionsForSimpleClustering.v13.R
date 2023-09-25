@@ -121,8 +121,8 @@ findSimpleClusters <- function(input_list, runType = "WES") {
     return(SmallClusters)
 }
 
-RunPyCloneWithSimpleClusters <- function(clusterName, patientID, SmallClusters, patientDirToUse = new.dir, yamlConfigLoc = template.config.yaml, pyclone.burnin = 1000, pyclone.seed = 1024, run.pyclone = TRUE, pyclone.module = "PyClone/0.12.3-foss-2016b-Python-2.7.12-tkinter") {
-    PyClone <- "PyClone"
+RunPyCloneWithSimpleClusters <- function(clusterName, patientID, seg.mat, SmallClusters, patientDirToUse = new.dir, yamlConfigLoc = template.config.yaml, pyclone.burnin = 1000, pyclone.seed = 1024, run.pyclone = TRUE, pyclone.module = "PyClone/0.12.3-foss-2016b-Python-2.7.12-tkinter") {
+    PyClone <- "pyclone-vi"
     ### give a name to the sample
     PyCloneRunName <- paste0(patientID, "_cluster", clusterName)
     ### create a specific subDirectory for this analysis
@@ -136,6 +136,18 @@ RunPyCloneWithSimpleClusters <- function(clusterName, patientID, SmallClusters, 
     for (region in RegionsInClustering) {
         pyclone.tsv   <- paste0(ClusterDir, "/", region, ".tsv")
         pyclone.table <- SmallClusters[[clusterName]]$PyCloneTables[[region]]$pyclone.table
+
+        # KT: needs reformatting for pyclone-vi
+        pyclone.table <- pyclone.table[, c("mutation_id", "region", "ref_counts", "var_counts", "normal_cn", "major_raw", "minor_raw")]
+        colnames(pyclone.table) <- c("mutation_id", "sample_id", "ref_counts", "alt_counts", "normal_cn", "major_cn", "minor_cn")
+        pyclone.table$sample_id <- as.character(pyclone.table$sample_id)
+
+        # KT: let's also add rhe tumour_content column
+        purities <- unique(seg.mat[, c("SampleID", "ACF")])
+        colnames(purities) <- c("sample_id", "tumour_content")
+
+        pyclone.table <- left_join(pyclone.table, purities)
+
         if (nrow(pyclone.table) == 1) {
             pyclone.out <- matrix(apply(pyclone.table, 2, as.character), nrow = 1)
             colnames(pyclone.out) <- colnames(pyclone.table)
@@ -145,90 +157,110 @@ RunPyCloneWithSimpleClusters <- function(clusterName, patientID, SmallClusters, 
         write.table(pyclone.out, sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE, file = pyclone.tsv)
 
         ### Run PyClone build_mutations_file TSV_FILE where TSV_FILE is the input file you have created.
-        pyclone.yaml <- paste0(ClusterDir, "/", region, ".yaml")
+        
 
+        #run PyClone-vi git command, lets run its with default parametes for now
+        pyclone.yaml <- paste0(ClusterDir, "/", region, ".yaml")
+        sample.results <- paste0(ClusterDir, "/", patientID, '.results.tsv')
         cmd <- paste0(PyClone
-                    , " build_mutations_file"
-                    , " --in_file ", pyclone.tsv
-                    , " --out_file ", pyclone.yaml)
+                , " fit"
+                , " --in-file ", pyclone.tsv
+                , " --out-file ", pyclone.yaml
+                , " --num-clusters ", min(max(1, floor(length(SmallClusters[[clusterName]]$MutationsWithCluster) / 5)), 10)
+                , " --density beta-binomial")
+        cat('\n')
+
+        cmd2 <- paste0(PyClone
+                , "  write-results-file"
+                , " --in-file ", pyclone.yaml
+                , " --out-file ", sample.results)
         cat('\n')
 
         if (run.pyclone) {
+            # run model fitting step
             cat(cmd)
             system(cmd)
 
+            # run step to select best results
+            cat(cmd2)
+            system(cmd2)
+            
+            
+            ### KT: don't think I need any of this for PyClone-vi
             ### AH edit change so it works with states separated over multiple lines as well
             #exclude state including g_v=AB from yaml file
-            yaml <- readLines(pyclone.yaml)
-            rm.indx <- grep("AB", yaml)
-            if (length(grep("prior_weight", grep("AB", yaml, value = TRUE))) > 0) {
-                yaml <- yaml[-rm.indx]    
-            } else {
-                yaml <- yaml[-c(rm.indx-2, rm.indx-1, rm.indx, rm.indx+1)]
-            } 
-            write.table(yaml, file = pyclone.yaml, col.names = FALSE, row.names = FALSE, quote = FALSE)
+            # yaml <- readLines(pyclone.yaml)
+            # rm.indx <- grep("AB", yaml)
+            # if (length(grep("prior_weight", grep("AB", yaml, value = TRUE))) > 0) {
+            #     yaml <- yaml[-rm.indx]    
+            # } else {
+            #     yaml <- yaml[-c(rm.indx-2, rm.indx-1, rm.indx, rm.indx+1)]
+            # } 
+            # write.table(yaml, file = pyclone.yaml, col.names = FALSE, row.names = FALSE, quote = FALSE)
+
+
         }
     }
 
+    # KT: also don't think I need any of this for pyclone-vi
+    # pyclone.config.yaml <- paste0(ClusterDir, "/", PyCloneRunName, ".config.yaml")
+    # pyclone.config      <- readLines(yamlConfigLoc)
+    # start.samples       <- (grep("samples", pyclone.config) + 1)
+    # end.samples         <- length(pyclone.config)
 
-    pyclone.config.yaml <- paste0(ClusterDir, "/", PyCloneRunName, ".config.yaml")
-    pyclone.config      <- readLines(yamlConfigLoc)
-    start.samples       <- (grep("samples", pyclone.config) + 1)
-    end.samples         <- length(pyclone.config)
+    # sample.lines        <- pyclone.config[start.samples:end.samples]
+    # pyclone.config      <- pyclone.config[-c(start.samples:end.samples)]
+    # pyclone.config      <- c(pyclone.config, "init_method: connected", "", "samples:")
+    # pyclone.config      <- gsub("working.directory.location", ClusterDir, pyclone.config)
 
-    sample.lines        <- pyclone.config[start.samples:end.samples]
-    pyclone.config      <- pyclone.config[-c(start.samples:end.samples)]
-    pyclone.config      <- c(pyclone.config, "init_method: connected", "", "samples:")
-    pyclone.config      <- gsub("working.directory.location", ClusterDir, pyclone.config)
+    # write.table(pyclone.config, file = pyclone.config.yaml, col.names = FALSE, row.names = FALSE, quote = FALSE)
 
-    write.table(pyclone.config, file = pyclone.config.yaml, col.names = FALSE, row.names = FALSE, quote = FALSE)
+    # RegionsInClustering <- SmallClusters[[clusterName]]$RegionsInCluster
+    # for (region in RegionsInClustering) {
+    #     sample.config <- gsub("TCGA.barcode", region, sample.lines)
+    #     # pyclone.yaml  <- paste0(new.dir, "/", region, ".yaml")
+    #     pyclone.yaml  <- paste0(region, ".yaml")
+    #     sample.config <- gsub("mutations.yaml", pyclone.yaml, sample.config)
+    #     region.purity <- 0.5
 
-    RegionsInClustering <- SmallClusters[[clusterName]]$RegionsInCluster
-    for (region in RegionsInClustering) {
-        sample.config <- gsub("TCGA.barcode", region, sample.lines)
-        # pyclone.yaml  <- paste0(new.dir, "/", region, ".yaml")
-        pyclone.yaml  <- paste0(region, ".yaml")
-        sample.config <- gsub("mutations.yaml", pyclone.yaml, sample.config)
-        region.purity <- 0.5
+    #     sample.config <- gsub("value: 1.0", paste0("value: ", signif(region.purity, 3)), sample.config)
+    #     sample.config <- sample.config[1:8]
 
-        sample.config <- gsub("value: 1.0", paste0("value: ", signif(region.purity, 3)), sample.config)
-        sample.config <- sample.config[1:8]
+    #     if (run.pyclone) {
+    #         write.table(sample.config, file = pyclone.config.yaml, append = TRUE, quote = FALSE, col.names = FALSE, row.names = FALSE)
+    #     }
+    # }
 
-        if (run.pyclone) {
-            write.table(sample.config, file = pyclone.config.yaml, append = TRUE, quote = FALSE, col.names = FALSE, row.names = FALSE)
-        }
-    }
+    # ### next, run pyclone
+    # cmd <- paste0(PyClone
+    #             , " run_analysis --config_file "
+    #             , pyclone.config.yaml
+    #             , " --seed "
+    #             , pyclone.seed)
+    # cat('\n')
 
-    ### next, run pyclone
-    cmd <- paste0(PyClone
-                , " run_analysis --config_file "
-                , pyclone.config.yaml
-                , " --seed "
-                , pyclone.seed)
-    cat('\n')
+    # if (run.pyclone) {
+    #     cat(cmd)
+    #     system(cmd)
+    # }
+    # cat('\n')
 
-    if (run.pyclone) {
-        cat(cmd)
-        system(cmd)
-    }
-    cat('\n')
+    # sample.results <- paste0(ClusterDir, "/", patientID, '.results.tsv')
+    # cmd <- paste0(PyClone
+    #            , " build_table --config_file "
+    #            , pyclone.config.yaml
+    #            , " --table_type old_style --out_file "
+    #            , sample.results
+    #            , " --max_clusters ", min(max(1, floor(length(SmallClusters[[clusterName]]$MutationsWithCluster) / 5)), 10)
+    #            , " --burnin "
+    #            , pyclone.burnin)
+    # cat('\n')
 
-    sample.results <- paste0(ClusterDir, "/", patientID, '.results.tsv')
-    cmd <- paste0(PyClone
-               , " build_table --config_file "
-               , pyclone.config.yaml
-               , " --table_type old_style --out_file "
-               , sample.results
-               , " --max_clusters ", min(max(1, floor(length(SmallClusters[[clusterName]]$MutationsWithCluster) / 5)), 10)
-               , " --burnin "
-               , pyclone.burnin)
-    cat('\n')
-
-    if(run.pyclone) {
-        cat(cmd)
-        system(cmd)
-    }
-    cat('\n')
+    # if(run.pyclone) {
+    #     cat(cmd)
+    #     system(cmd)
+    # }
+    # cat('\n')
 }
 
 CreateOutputNoPyCloneRun <- function(clusterName, patientID, SmallClusters, patientDirToUse = new.dir) {
