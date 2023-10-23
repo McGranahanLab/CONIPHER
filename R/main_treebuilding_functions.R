@@ -942,8 +942,8 @@ treebuilding_plot <- function(sample_pyclone_tree) {
     ewidth <- rep(1,length(ecol))
 
     #label consensus edges in other colour
-    ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- '#000000'
-    ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <-150
+    ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <- '#000000'
+    ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <-150
 
     plot(g
          , layout=l
@@ -1078,8 +1078,8 @@ treebuilding_plot <- function(sample_pyclone_tree) {
         ewidth <- rep(1,length(ecol))
 
         #label consensus edges in other colour
-        ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- '#000000'
-        ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- 2
+        ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <- '#000000'
+        ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <- 2
 
         plot(g, main = sampleID
              , layout = l
