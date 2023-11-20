@@ -24,7 +24,7 @@ conipher_treebuilding <- function(input_tsv_loc,
                                   min_cluster_size = 5,
                                   multi_trees = TRUE,
                                   ...) {
-    out_dir         <- paste0(out_dir, "/Trees/")
+    out_dir         <- paste0(out_dir, "/")
 
     # cat("\nCONIPHER tree building analysis of the following tumour case:\n")
     # print(patient)
@@ -550,6 +550,7 @@ treebuilding_run <- function(sample_input_list
                                ,test_pyclone_absolute = test_pyclone_absolute
                                ,nested_pyclone = nested_pyclone
                                ,nested_pyclone_absolute = nested_pyclone_absolute
+                               ,prefix = prefix
                                ,min_ccf = min_ccf
                                ,p_value_cut = pval_cutoff
                                ,min_cluster_size = min_cluster_size
@@ -765,6 +766,7 @@ treebuilding_run <- function(sample_input_list
                                       ccf_table_pyclone_clean = output_list$ccf_table_pyclone_clean)
 
   })
+  names(subclonal_exp_score_min_sce_trees) <- graph_pyclone$min_sce_trees
   subclonal_exp_score_out <- list(subclonal_exp_score = subclonal_exp_score, subclonal_exp_score_min_sce_trees = subclonal_exp_score_min_sce_trees)
 
 
@@ -940,8 +942,8 @@ treebuilding_plot <- function(sample_pyclone_tree) {
     ewidth <- rep(1,length(ecol))
 
     #label consensus edges in other colour
-    ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- '#000000'
-    ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <-150
+    ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <- '#000000'
+    ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <-150
 
     plot(g
          , layout=l
@@ -1076,8 +1078,8 @@ treebuilding_plot <- function(sample_pyclone_tree) {
         ewidth <- rep(1,length(ecol))
 
         #label consensus edges in other colour
-        ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- '#000000'
-        ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_relationships] <- 2
+        ecol[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <- '#000000'
+        ewidth[paste(edges[,1],edges[,2],sep=":")%in%pyclone_tree$consensus_branches] <- 2
 
         plot(g, main = sampleID
              , layout = l

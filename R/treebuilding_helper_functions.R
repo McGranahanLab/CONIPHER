@@ -1195,6 +1195,7 @@ merge.clusters.full   <- function(test_pyclone
                                   , test_pyclone_absolute
                                   , nested_pyclone
                                   , nested_pyclone_absolute
+                                  , prefix
                                   , min_ccf=0.05
                                   , p_value_cut=0.01
                                   , min_cluster_size=5

@@ -1967,7 +1967,7 @@ copy.driven.clusterNEW      <-  function(cluster
             next;
           }
           
-          p.val <- pvalue(coin::independence_test(as.numeric(ccfs[order(cpn.states)])~as.numeric(cpn.states[order(cpn.states)]),alternative = 'greater'))
+          p.val <- coin::pvalue(coin::independence_test(as.numeric(ccfs[order(cpn.states)])~as.numeric(cpn.states[order(cpn.states)]),alternative = 'greater'))
           for (mut in rownames(sub.ccf))
           {
             # is this mutation actually lost? 
@@ -2166,7 +2166,7 @@ copy.driven.clusterNEW      <-  function(cluster
             next;
           }
           
-          p.val <- pvalue(coin::independence_test(as.numeric(ccfs[order(cpn.states)])~as.numeric(cpn.states[order(cpn.states)]),alternative = 'greater'))
+          p.val <- coin::pvalue(coin::independence_test(as.numeric(ccfs[order(cpn.states)])~as.numeric(cpn.states[order(cpn.states)]),alternative = 'greater'))
           for (mut in rownames(sub.ccf))
           {
             # is this mutation actually lost? 

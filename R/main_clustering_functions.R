@@ -25,7 +25,7 @@ conipher_clustering <- function(case_id,
                                 nProcs = 1,
                                 ...) {
     patient              <- case_id
-    new.dir              <- paste0(out_dir, "/Clustering/")
+    new.dir              <- paste0(out_dir, "/")
     driver_cat           <- unlist(strsplit(driver_filter, split = ","))
     if (is.null(pyclone_yaml_loc)) {
         template.config.yaml <- system.file("extdata", "template.config.yaml", package = "CONIPHER", mustWork = TRUE)
@@ -54,6 +54,9 @@ conipher_clustering <- function(case_id,
     if (nrow(input_tsv) == 0) {
         stop('No mutations passed filtering, stopping PyClone phylo clustering')
     }
+
+    ### fix issue with sample names including '-'
+    input_tsv$SAMPLE  <- gsub("-", "\\.", input_tsv$SAMPLE)
 
     input_list     <- clustering_preprocess(input_tsv, new.dir = new.dir, subclonal_copy_correction = subclonal_copy_correction, multiple_test_correction = multiple_test_correction, only_truncal_subclonal_copy_correction = only_truncal_subclonal_copy_correction, fix_absentCCFs = fix_absentCCFs)
     sample.results <- clustering_run(input_list, nProcs = nProcs, new.dir = new.dir, burn_in = burn_in, pyclone_seed = seed, template.config.yaml = template.config.yaml)
@@ -276,64 +279,71 @@ clustering_preprocess <- function(input_table, new.dir, subclonal_copy_correctio
             #all mutations are greater than 1.5 --> re-centre on 1 or       #one or more (but not all) mutation is greater than 1.5 (but all are clonal) --> re-centre on 1
             if (length(which(mut_table$phyloCCF > 1.5)) == nrow(mut_table) | length(which(mut_table$phyloCCF.0.05 >= 1)) == nrow(mut_table)) {
                 small_mut_table <- mut_table[mut_table$phyloCCF.0.05 > 1,, drop = FALSE]
-                if (nrow(small_mut_table) == 0) next
-                for (i in 1:nrow(small_mut_table)) {
-                    small_row <- small_mut_table[i,, drop = FALSE]
-                    region <- unlist(small_row$region)
-                    region.copy <- seg.mat.phylo[seg.mat.phylo$SampleID %in% region,]
+                if (nrow(small_mut_table) > 0) {
+                    for (i in 1:nrow(small_mut_table)) {
+                        small_row <- small_mut_table[i,, drop = FALSE]
+                        region <- unlist(small_row$region)
+                        region.copy <- seg.mat.phylo[seg.mat.phylo$SampleID %in% region,]
 
-                    phyloCCF      <- small_row$absolute.ccf
-                    phyloCCF_0.05 <- min(small_row$absolute.ccf.0.05, small_row$absolute.ccf.0.05 - abs(small_row$phyloCCF - small_row$phyloCCF.0.05))
-                    phyloCCF_0.95 <- max(small_row$absolute.ccf.0.95, small_row$absolute.ccf.0.95 + abs(small_row$phyloCCF - small_row$phyloCCF.0.05))
+                        phyloCCF      <- small_row$absolute.ccf
+                        phyloCCF_0.05 <- min(small_row$absolute.ccf.0.05, small_row$absolute.ccf.0.05 - abs(small_row$phyloCCF - small_row$phyloCCF.0.05))
+                        phyloCCF_0.95 <- max(small_row$absolute.ccf.0.95, small_row$absolute.ccf.0.95 + abs(small_row$phyloCCF - small_row$phyloCCF.0.05))
 
-                    phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.05 <- phyloCCF_0.05
-                    phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.95 <- phyloCCF_0.95
-                    phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF <- phyloCCF 
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.05 <- phyloCCF_0.05
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.95 <- phyloCCF_0.95
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF <- phyloCCF 
+                    }
                 } 
             }
           
             #at least one mutation is subclonal --> properly adjust no.chrs.bearing.mut
-            if (length(which(mut_table$phyloCCF.0.95 < 1)) >=1 ) {
+            if (length(which(mut_table$phyloCCF.0.95 * mut_table$no.chrs.bearing.mut < 1)) >= 1) {
                 small_mut_table <- mut_table[mut_table$phyloCCF.0.05 > 1,, drop = FALSE]
-                if (nrow(small_mut_table)==0) next
-                for (i in 1:nrow(small_mut_table)) {
-                    small_row <- small_mut_table[i,, drop = FALSE]
-                    region <- unlist(small_row$region)
-                    region.copy <- seg.mat.phylo[seg.mat.phylo$SampleID %in% region,]
+                if (nrow(small_mut_table) > 0) {
+                    for (i in 1:nrow(small_mut_table)) {
+                        small_row <- small_mut_table[i,, drop = FALSE]
+                        region <- unlist(small_row$region)
+                        region.copy <- seg.mat.phylo[seg.mat.phylo$SampleID %in% region,]
 
-                    phyloCCF      <- small_row$phyloCCF / small_row$no.chrs.bearing.mut
-                    phyloCCF_0.05 <- small_row$phyloCCF.0.05 / small_row$no.chrs.bearing.mut
-                    phyloCCF_0.95 <- small_row$phyloCCF.0.95 / small_row$no.chrs.bearing.mut
-                    phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.05 <- phyloCCF_0.05
-                    phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.95 <- phyloCCF_0.95
-                    phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF <- phyloCCF
-                }    
+                        if (small_row$phyloCCF != small_row$mutCopyNum) {
+                            phyloCCF      <- small_row$phyloCCF / small_row$no.chrs.bearing.mut
+                            phyloCCF_0.05 <- small_row$phyloCCF.0.05 / small_row$no.chrs.bearing.mut
+                            phyloCCF_0.95 <- small_row$phyloCCF.0.95 / small_row$no.chrs.bearing.mut
+                        } else {
+                            phyloCCF      <- small_row$phyloCCF
+                            phyloCCF_0.05 <- small_row$phyloCCF.0.05
+                            phyloCCF_0.95 <- small_row$phyloCCF.0.95
+                        }
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.05 <- phyloCCF_0.05
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF.0.95 <- phyloCCF_0.95
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% small_row$mutation_id,]$phyloCCF <- phyloCCF
+                    } 
+                }   
             } 
         }
         
-        if (!TRUE %in% c(mut_table$phyloCCF > mut_table$mutCopyNum)) next
         if (TRUE %in% c(mut_table$phyloCCF > mut_table$mutCopyNum)) {
             # are all the mutations now truncal?
             if (length(which(mut_table$phyloCCF.0.95 < 1)) == 0) next
             if (only_truncal_subclonal_copy_correction %in% TRUE) {
                 if (length(which(mut_table$phyloCCF.0.95 < 1)) >= 1) {
                     # so we've performed copy number correction, but that didn't make the mutation clonal, so let's revert back to non-copy number corrected
-                    muts_to_revert <- mut_table[mut_table$no.chrs.bearing.mut<1,,drop=FALSE]
+                    muts_to_revert <- mut_table[mut_table$no.chrs.bearing.mut < 1,, drop = FALSE]
 
                     for (region in unlist(muts_to_revert$region)) {
-                        mut_to_revert <- muts_to_revert[unlist(muts_to_revert$region)%in%region,,drop=FALSE]
-                        region.copy <- seg.mat.phylo[seg.mat.phylo$SampleID%in%region,]
+                        mut_to_revert <- muts_to_revert[unlist(muts_to_revert$region) %in% region,, drop = FALSE]
+                        region.copy <- seg.mat.phylo[seg.mat.phylo$SampleID %in% region,]
                         expVAF   <- min(1 - 1e-6, c((region.copy$ACF[1]*1) / (2*(1-region.copy$ACF[1]) + region.copy$ACF[1]*(as.numeric(mut_to_revert$major_raw)+as.numeric(mut_to_revert$minor_raw)))))
                         VAF_ci   <- prop.test(x = as.numeric(mut_to_revert$var_counts),n = as.numeric(mut_to_revert$ref_counts)+as.numeric(mut_to_revert$var_counts),p = expVAF)
                         phyloCCF      <- (VAF_ci$estimate *1/region.copy$ACF[1])*((region.copy$ACF[1]*(as.numeric(mut_to_revert$major_raw)+as.numeric(mut_to_revert$minor_raw)))+2*(1-region.copy$ACF[1]))
                         phyloCCF_0.05 <- (VAF_ci$conf.int[1] *1/region.copy$ACF[1])*((region.copy$ACF[1]*(as.numeric(mut_to_revert$major_raw)+as.numeric(mut_to_revert$minor_raw)))+2*(1-region.copy$ACF[1]))
                         phyloCCF_0.95 <- (VAF_ci$conf.int[2] *1/region.copy$ACF[1])*((region.copy$ACF[1]*(as.numeric(mut_to_revert$major_raw)+as.numeric(mut_to_revert$minor_raw)))+2*(1-region.copy$ACF[1]))
 
-                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id%in%mut_to_revert$mutation_id,]$no.chrs.bearing.mut <- 1
-                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id%in%mut_to_revert$mutation_id,]$phyloCCF.0.05 <- phyloCCF_0.05
-                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id%in%mut_to_revert$mutation_id,]$phyloCCF.0.95 <- phyloCCF_0.95
-                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id%in%mut_to_revert$mutation_id,]$phyloCCF <- phyloCCF
-                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id%in%mut_to_revert$mutation_id,]$expected.VAF <- expVAF
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% mut_to_revert$mutation_id,]$no.chrs.bearing.mut <- 1
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% mut_to_revert$mutation_id,]$phyloCCF.0.05 <- phyloCCF_0.05
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% mut_to_revert$mutation_id,]$phyloCCF.0.95 <- phyloCCF_0.95
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% mut_to_revert$mutation_id,]$phyloCCF <- phyloCCF
+                        phylo.region.list[[region]][phylo.region.list[[region]]$mutation_id %in% mut_to_revert$mutation_id,]$expected.VAF <- expVAF
                     }
                 }
             }
@@ -637,6 +647,15 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                 if (!is.null(input_seg_tsv_loc)) {
                     print("Using specified seg file for plotting")
                     region.seg.copy     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = FALSE)
+                    region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
+                    region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
+                    region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
+                    region.seg.copy$CHR           <- as.numeric(region.seg.copy$CHR)
+                    region.seg.copy$STARTPOS      <- as.numeric(region.seg.copy$STARTPOS)
+                    
+                    #Sort by start position within chromosome
+                    region.seg.copy <- region.seg.copy[order(region.seg.copy$CHR,
+                                                             region.seg.copy$STARTPOS), ]
                     # If providing seg file, ensure the sample names match the sample names in input tsv
                     if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
@@ -702,6 +721,15 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                 if (!is.null(input_seg_tsv_loc)) {
                     print("Using specified seg file for plotting")
                     region.seg.copy     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = FALSE)
+                    region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
+                    region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
+                    region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
+                    region.seg.copy$CHR           <- as.numeric(region.seg.copy$CHR)
+                    region.seg.copy$STARTPOS      <- as.numeric(region.seg.copy$STARTPOS)
+                    
+                    #Sort by start position within chromosome
+                    region.seg.copy <- region.seg.copy[order(region.seg.copy$CHR,
+                                                             region.seg.copy$STARTPOS), ]
                     # If providing seg file, ensure the sample names match the sample names in input tsv
                     if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[, 1]))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
@@ -824,7 +852,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
         dplyr::mutate(CHR = as.numeric(sapply(strsplit(unlist(output_tsv$mutation_id), split = ":"), function(x) x[2])),
                       POS = as.numeric(sapply(strsplit(unlist(output_tsv$mutation_id), split = ":"), function(x) x[3])),
                       key = paste(paste0("chr", CHR), POS, REF, ALT, sep = ":")) %>%
-        dplyr::left_join(input_tsv %>% dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, DEPTH, ACF, PLOIDY), by = c("CHR", "POS", "REF", "ALT", "SAMPLE")) %>%
+        dplyr::left_join(input_tsv %>% dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, DEPTH, ACF, PLOIDY) %>% mutate(CHR = as.numeric(CHR), POS = as.numeric(POS)), by = c("CHR", "POS", "REF", "ALT", "SAMPLE")) %>%
         dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, REF_COUNT, VAR_COUNT, DEPTH, CLUSTER, CCF_PHYLO, CCF_OBS, MUT_COPY, COPY_NUMBER_A, COPY_NUMBER_B, ACF, PLOIDY, CLEAN, phyloCCF.0.05, phyloCCF.0.95)
 
     write.table(output_tsv %>% dplyr::select(-phyloCCF.0.05, -phyloCCF.0.95), file = paste0(new.dir, patient, ".SCoutput.FULL.tsv"), row.names = FALSE, quote = FALSE, sep = "\t")
@@ -975,6 +1003,15 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
     if (!is.null(input_seg_tsv_loc)) {
         print("Using specified seg file for plotting")
         seg.mat.copy.plot     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = F)
+        seg.mat.copy.plot$SAMPLE <- gsub("-", "\\.", seg.mat.copy.plot$SAMPLE)
+        seg.mat.copy.plot$COPY_NUMBER_A <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_A)
+        seg.mat.copy.plot$COPY_NUMBER_B <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_B)
+        seg.mat.copy.plot$CHR           <- as.numeric(seg.mat.copy.plot$CHR)
+        seg.mat.copy.plot$STARTPOS      <- as.numeric(seg.mat.copy.plot$STARTPOS)
+        
+        #Sort by start position within chromosome
+        seg.mat.copy.plot <- seg.mat.copy.plot[order(seg.mat.copy.plot$CHR,
+                                                     seg.mat.copy.plot$STARTPOS), ]
         # If providing seg file, ensure the sample names match the sample names in input tsv
         if (!any(unique(seg.mat.copy.plot$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
             stop('Sample IDs do not match between input_tsv and input_seg_tsv')
