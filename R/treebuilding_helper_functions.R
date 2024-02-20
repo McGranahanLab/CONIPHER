@@ -333,6 +333,9 @@ grow.trees <- function(nestedlist
 
         clusters_to_remove_for_now       <- clusters_to_remove_for_now[!clusters_to_remove_for_now%in%still_keep]
         clusters_to_remove_for_now       <- unique(c(clusters_to_remove_for_now,dont_keep))
+        if (trunk_cluster %in% clusters_to_remove_for_now) {
+          clusters_to_remove_for_now <- clusters_to_remove_for_now[!clusters_to_remove_for_now %in% trunk_cluster]
+        }
 
 
         #check how many clusters we're going to be assessing for permutation
@@ -342,6 +345,9 @@ grow.trees <- function(nestedlist
         if(length(all_clusters_to_test)>25)
         {
           clusters_to_remove_for_now       <- c(all_clusters_to_test[-c(1:25)],clusters_to_remove_for_now)
+          if (trunk_cluster %in% clusters_to_remove_for_now) {
+            clusters_to_remove_for_now <- clusters_to_remove_for_now[!clusters_to_remove_for_now %in% trunk_cluster]
+          }
           all_clusters_to_test             <- clusters_to_use[!clusters_to_use%in%clusters_to_remove_for_now]
           test_out                         <- is.there.ccf.issue(nestedclust = nestedclust_to_use,directed_input_graph = directedGraph_input_corrected,ccf_ci_lower = ccf_ci_lower,trunk_cluster = trunk_cluster,clusters_to_remove = clusters_to_remove_for_now,clusters_to_use = clusters_to_use,max_per_level = max_per_level)
 
