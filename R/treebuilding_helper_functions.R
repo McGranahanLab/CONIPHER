@@ -263,7 +263,9 @@ grow.trees <- function(nestedlist
   # identify if there are issues with the tree
   # are there circles #
   directedGraph <- graph.data.frame(directedGraph_input_pruned_unfolded)
-  issue_circles <- girth(directedGraph)$girth != 0
+  #issue_circles <- girth(directedGraph)$girth != 0
+  issue_circles <- !girth(directedGraph)$girth%in%c(0,Inf)
+
   issue_circles <- ifelse(issue_circles==TRUE,TRUE,ifelse(max(table(directedGraph_input_pruned_unfolded[,2]))>1,TRUE,FALSE))
   cluster_qc_new <- cluster_qc
   cluster_qc_new[names(table(directedGraph_input_pruned_unfolded[, 2])), 'IncomingEdges'] <- table(directedGraph_input_pruned_unfolded[, 2])
@@ -945,7 +947,10 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
       #now, let's explore the tree associated with this.
       tlevels          <- check.levels.ccf(new.tree, ccf_ci_lower, trunk_cluster)
       level.issue      <- max(tlevels[[1]])>=max_per_level
-      circles_exist    <- girth(new.tree.graph)$girth != 0
+      #circles_exist    <- girth(new.tree.graph)$girth != 0
+       circles_exist <- !girth(new.tree.graph)$girth%in%c(0,Inf)
+
+      
       circles_exist    <- ifelse(circles_exist==TRUE,TRUE,ifelse(max(table(new.tree[,2]))>1,TRUE,FALSE))
       new.tree.change  <- !identical(new.tree,previous.tree)
 
@@ -991,7 +996,9 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
       #now, let's explore the tree associated with this.
       tlevels          <- check.levels.ccf(new.tree, ccf_ci_lower, trunk_cluster)
       level.issue      <- max(tlevels[[1]])>=max_per_level
-      circles_exist    <- girth(new.tree.graph)$girth != 0
+      #circles_exist    <- girth(new.tree.graph)$girth != 0
+      circles_exist <- !girth(new.tree.graph)$girth%in%c(0,Inf)
+
       circles_exist    <- ifelse(circles_exist==TRUE,TRUE,ifelse(max(table(new.tree[,2]))>1,TRUE,FALSE))
       new.tree.change  <- !identical(new.tree,previous.tree)
 
@@ -1082,7 +1089,9 @@ grow.multi.trees <- function(nestedlist,graph_pyclone,pyclone,ccf_buffer=10,n_cl
             #now, let's explore the tree associated with this.
             tlevels          <- check.levels.ccf(new.tree, ccf_ci_lower, trunk_cluster)
             level.issue      <- max(tlevels[[1]])>=max_per_level
-            circles_exist    <- girth(new.tree.graph)$girth != 0
+            #circles_exist    <- girth(new.tree.graph)$girth != 0
+            circles_exist <- !girth(new.tree.graph)$girth%in%c(0,Inf)
+
             circles_exist    <- ifelse(circles_exist==TRUE,TRUE,ifelse(max(table(new.tree[,2]))>1,TRUE,FALSE))
 
             if(level.issue%in%FALSE&circles_exist%in%FALSE) # &nesting.issue%in%FALSE)
@@ -1943,7 +1952,9 @@ is.there.ccf.issue <- function(nestedclust
   newlevels                                     <- check.levels.ccf(directedGraph_input_revised_pruned_unfolded, new_lower, trunk_cluster)
   new.levels.with.issues                        <- which(rowSums(newlevels[[1]]>max_per_level)>0)
   directedGraph_revised                         <- graph.data.frame(directedGraph_input_revised_pruned_unfolded)
-  circles_exist                                 <- girth(directedGraph_revised)$girth != 0
+  #circles_exist                                 <- girth(directedGraph_revised)$girth != 0
+  circles_exist                                  <- !girth(directedGraph_revised)$girth%in%c(0,Inf)
+
   circles_exist    <- ifelse(circles_exist==TRUE,TRUE,ifelse(max(table(directedGraph_input_revised_pruned_unfolded[,2]))>1,TRUE,FALSE))
 
 
