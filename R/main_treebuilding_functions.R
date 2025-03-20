@@ -143,7 +143,7 @@ conipher_treebuilding <- function(input_tsv_loc,
 
       ### writing output muttable - similar to input
       input_tsv <- input_tsv %>% dplyr::rename(originalCLUSTER = CLUSTER)
-      if (is.null(nrow(sample_pyclone_tree$merge_clusters))) {
+      if (is.null(nrow(sample_pyclone_tree$merged_clusters))) {
         input_tsv <- input_tsv %>% dplyr::mutate(treeCLUSTER = originalCLUSTER)
       } else {
         input_tsv <- input_tsv %>% dplyr::mutate(treeCLUSTER = originalCLUSTER)
