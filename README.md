@@ -98,10 +98,28 @@ conipher_treebuilding(prefix = "CRUK",
 ---
 ### Anticipated results
 The clustering output will include the following output files (examples are in "conipher_results/Clustering"):
+- <CASE_ID>.SCoutput.CLEAN.tsv: A mutation table in the same format as input.tsv, including columns for the
+following: mutation cluster assignments (CLUSTER), mutation PhyloCCF estimates (CCF_PHYLO); observed CCF (CCF_OBS); mutation copy number estimates for each mutation in each tumor sample (MUT_COPY); mutation identifier <CASE_ID>:<CHR>:<POS>:<REF>:<ALT> (mutation_id)
+- <CASE_ID>.SCoutput.FULL.tsv: A mutation table in same format as above except with additional column CLEAN, a logical flag indicating whether this mutation was removed (CLEAN==FALSE)
+- <CASE_ID>.removed.muts.txt: A mutation table comprising mutations removed during the clustering stage. This file will not be generated if no mutations are removed.
+- <CASE_ID>_pyclone_cluster_assignment_copynumber_clean.pdf: Genome plots of each mutation plotted at its genomic position (x-axis) vs it's estimated mutation copy number (y-axis) for each tumor sample
 
+The clustering output will include the following output plots:
+- <CASE_ID>.removedCPN.muts.pdf: Similar genome plots of mutation copy numbers plotted for mutations that were removed during mutation clustering post-processing
+- <CASE_ID>.pyclone_cluster_assignment_phylo_clean.pdf: Scatter plot of estimated PhyloCCF of each (non-removed) mutation between each pair of samples, coloured by assigned mutation cluster
 
-The tree building output will include 3 output files (examples are in "conipher_results/Trees"):
-- <CASE_ID>.tree.RDS: an R list object containing tree building output information
+The tree building output will include the following output files (examples are in "conipher_results/Trees"):
+- allTrees.txt: A text file containing all inferred phylogenetic trees
+- alternativeTreeMetrics.txt: A tab-delimted file containing summary metrics of all alternative phylogenetic trees
+- clusterInfo.txt: A tab-delimted text file containing information about each inferred mutation cluster
+- cloneProportionsMinErrorTrees.txt: A tab-delimted file containing inferred clone proportion tables for the phylogenetic trees that had the lowest error
+- subclonalExpansionScoreMinErrorTrees.txt: A tab-delimted file containing subclonal expansion scores for the phylogenetic trees that had the lowest error
+- consensusBranches.txt: A text file containing all ancestor cluster - descendant cluster pairs that were shared amongst all inferred alternative phylogenetic trees
+- consensusRelationships.txt: A text file containing all parent cluster - child cluster edge pairs that were shared amongst all inferred alternative phylogenetic trees
+- treeTable.tsv: A tab-separated mutation table in the format of input.tsv, including columns originalCLUSTER (cluster ID that the mutation was assigned to in CONIPHER clustering stage) and treeCLUSTER (the mutation's final cluster assignment after CONIPHER tree building stage)
+- <CASE_ID>.tree.RDS: an R list object containing all tree building output information
+
+The tree building output will include the following output plots:
 - pytree_and_bar.pdf: a plot of the default reconstructed tree and barplot
 - pytree_multipletrees.pdf: a plot showing all possible alternative phylogenetic trees found by CONIPHER
 
