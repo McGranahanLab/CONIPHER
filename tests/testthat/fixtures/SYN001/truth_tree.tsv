@@ -1,0 +1,4 @@
+CLONE	CLUSTER	PARENT	N_MUTATIONS	CCF_R1	CCF_R2
+clone1	1	diploid	30	1.0	1.0
+clone2	2	clone1	20	0.6	0.4
+clone3	3	clone2	20	0.3	0.15
