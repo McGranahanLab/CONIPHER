@@ -107,3 +107,18 @@ The tree building output will include 3 output files (examples are in "conipher_
 
 
 
+
+## Testing
+
+Golden-file regression tests live in `tests/testthat/`. They run CONIPHER on three synthetic tumours simulated from known clone trees (`tests/testthat/fixtures/`) and compare the output with stored results (`tests/testthat/golden/`). They also check that the default tree recovers the true topology.
+
+```
+# inside the conipher conda environment, from the repository root
+R CMD INSTALL .
+Rscript -e 'testthat::test_local()'
+```
+
+- **Tree building** tests start from the stored clustering output, are pure R and take about 1–2 minutes.
+- **Clustering** tests need `PyClone` on `PATH` and take about 1–1.5 minutes per case. They are skipped when PyClone is missing. PyClone runs with fixed seed 1024 and a test-only config of 2000 MCMC iterations (`tests/testthat/fixtures/pyclone_fast.yaml`).
+
+If a change is meant to alter the output, regenerate the golden files with `Rscript tools/update_golden.R`, check the diff, and explain the change in the commit message.

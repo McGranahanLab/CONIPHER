@@ -1,0 +1,5 @@
+CONIPHER 2.1.0
+R version 4.0.2 (2020-06-22)
+PyClone-0.13.1
+Commit 201e085
+Platform x86_64-conda_cos6-linux-gnu
