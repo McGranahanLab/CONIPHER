@@ -96,6 +96,10 @@ conipher_treebuilding(prefix = "CRUK",
 
 
 ---
+### Input format
+The input table (and the optional copy number segment table, `input_seg_tsv_loc`) is read by column name, so the order of the columns does not matter. The raw major and minor allele copy numbers go in the `COPY_NUMBER_MAJOR` and `COPY_NUMBER_MINOR` columns. The legacy names `COPY_NUMBER_A` and `COPY_NUMBER_B` are still accepted. CONIPHER output tables use the new names.
+
+---
 ### Anticipated results
 The clustering output will include the following output files (examples are in "conipher_results/Clustering"):
 

@@ -1,13 +1,13 @@
 create.subclonal.copy.number <- function(seg.mat.copy, min.subclonal = 0.1) {
     seg.out           <- seg.mat.copy
-    seg.out$nMaj1     <- floor(as.numeric(seg.out$COPY_NUMBER_A))
-    seg.out$nMaj2     <- ceiling(as.numeric(seg.out$COPY_NUMBER_A))
-    seg.out$nMin1     <- floor(as.numeric(seg.out$COPY_NUMBER_B))
-    seg.out$nMin2     <- ceiling(as.numeric(seg.out$COPY_NUMBER_B))
+    seg.out$nMaj1     <- floor(as.numeric(seg.out$COPY_NUMBER_MAJOR))
+    seg.out$nMaj2     <- ceiling(as.numeric(seg.out$COPY_NUMBER_MAJOR))
+    seg.out$nMin1     <- floor(as.numeric(seg.out$COPY_NUMBER_MINOR))
+    seg.out$nMin2     <- ceiling(as.numeric(seg.out$COPY_NUMBER_MINOR))
   
-    seg.out$fracMaj1  <- as.numeric(seg.out$nMaj2) - as.numeric(seg.out$COPY_NUMBER_A)
+    seg.out$fracMaj1  <- as.numeric(seg.out$nMaj2) - as.numeric(seg.out$COPY_NUMBER_MAJOR)
     seg.out$fracMaj2  <- 1 - as.numeric(seg.out$fracMaj1)
-    seg.out$fracMin1  <- as.numeric(seg.out$nMin2) - as.numeric(seg.out$COPY_NUMBER_B)  
+    seg.out$fracMin1  <- as.numeric(seg.out$nMin2) - as.numeric(seg.out$COPY_NUMBER_MINOR)  
     seg.out$fracMin2  <- 1 - as.numeric(seg.out$fracMin1)
   
   
@@ -126,7 +126,7 @@ create.subclonal.copy.number <- function(seg.mat.copy, min.subclonal = 0.1) {
     colnames(seg.final)
     col.names <- c("SampleID", "chr", "startpos", "endpos", "n.het", 
                    "cnTotal", "nMajor", "nMinor", "Ploidy", "ACF",
-                   "COPY_NUMBER_A", "COPY_NUMBER_B", "fracA", "nMaj_A", "nMin_A",
+                   "COPY_NUMBER_MAJOR", "COPY_NUMBER_MINOR", "fracA", "nMaj_A", "nMin_A",
                    "fracB", "nMaj_B", "nMin_B", 
                    "fracC", "nMaj_C", "nMin_C", 
                    "fracD", "nMaj_D", "nMin_D")
@@ -257,8 +257,8 @@ identify.subclonal.mut.copy.number.ascat <- function(x, sub.mat.mut, sub.mat.cop
   
   minor_cn            <- min(c(copy$nMajor,copy$nMinor))
   major_cn            <- max(c(copy$nMajor,copy$nMinor))
-  major_raw           <- c(copy$COPY_NUMBER_A)
-  minor_raw           <- c(copy$COPY_NUMBER_B)
+  major_raw           <- c(copy$COPY_NUMBER_MAJOR)
+  minor_raw           <- c(copy$COPY_NUMBER_MINOR)
   fracA               <- as.numeric(copy$fracA)
   nMaj_A              <- as.numeric(copy$nMaj_A)
   nMin_A              <- as.numeric(copy$nMin_A)
@@ -3520,10 +3520,7 @@ plot.region.mutCopyNum  <- function(phylo.region.list
       }
 
       # rename columns
-      sub.mat.copy               <- seg.mat.copy[seg.mat.copy$SAMPLE%in%region,,drop=FALSE]
-      colnames(sub.mat.copy)[2]  <- 'Chromosome'
-      colnames(sub.mat.copy)[3]  <- 'StartPosition'
-      colnames(sub.mat.copy)[4]  <- 'EndPosition'
+      sub.mat.copy               <- standardise_seg_position_columns(seg.mat.copy[seg.mat.copy$SAMPLE%in%region,,drop=FALSE])
       region.phyloCCF            <- phylo.region.list[[region]]
       
       #pdf(early.late.pdf)
@@ -3603,10 +3600,7 @@ plot.region.mutCopyNum  <- function(phylo.region.list
       }
       
       # rename columns
-      sub.mat.copy               <- seg.mat.copy[seg.mat.copy$SAMPLE%in%region,,drop=FALSE]
-      colnames(sub.mat.copy)[2]  <- 'Chromosome'
-      colnames(sub.mat.copy)[3]  <- 'StartPosition'
-      colnames(sub.mat.copy)[4]  <- 'EndPosition'
+      sub.mat.copy               <- standardise_seg_position_columns(seg.mat.copy[seg.mat.copy$SAMPLE%in%region,,drop=FALSE])
       region.phyloCCF            <- phylo.region.list[[region]]
       
       #pdf(early.late.pdf)
@@ -3687,10 +3681,7 @@ plot.region.mutCopyNum  <- function(phylo.region.list
           seg.mat.copy$SAMPLE <- seg.mat.copy$SampleID
         } 
         # rename columns
-        sub.mat.copy               <- seg.mat.copy[seg.mat.copy$SAMPLE%in%region,,drop=FALSE]
-        colnames(sub.mat.copy)[2]  <- 'Chromosome'
-        colnames(sub.mat.copy)[3]  <- 'StartPosition'
-        colnames(sub.mat.copy)[4]  <- 'EndPosition'
+        sub.mat.copy               <- standardise_seg_position_columns(seg.mat.copy[seg.mat.copy$SAMPLE%in%region,,drop=FALSE])
         region.phyloCCF            <- phylo.region.list[[region]]
         region.phyloCCF.cluster    <- region.phyloCCF[names(which(mostLikelyClusters==cluster)),,drop=FALSE]
         #pdf(early.late.pdf)
@@ -3769,15 +3760,16 @@ plot.simpleClusters.raw    <- function( seg.mat.patient
   seg.mat.patient$Chromosome    <- as.numeric(as.character(seg.mat.patient$Chromosome))
   seg.mat.patient$StartPosition <- as.numeric(as.character(seg.mat.patient$StartPosition))
   seg.mat.patient$EndPosition   <- as.numeric(as.character(seg.mat.patient$EndPosition))
-  seg.mat.patient$major         <- seg.mat.patient$COPY_NUMBER_A
-  seg.mat.patient$min.allele    <- seg.mat.patient$COPY_NUMBER_B
+  seg.mat.patient$major         <- seg.mat.patient$COPY_NUMBER_MAJOR
+  seg.mat.patient$min.allele    <- seg.mat.patient$COPY_NUMBER_MINOR
   
   
-  chrom.length.copy   <- fun.chrom.length(seg.mat.patient[,2:4])
-  chrom.segs          <- fun.add.chrom(seg.mat.patient[,2:4],chrom.length.copy)
+  position.cols       <- c("Chromosome", "StartPosition", "EndPosition")
+  chrom.length.copy   <- fun.chrom.length(seg.mat.patient[,position.cols])
+  chrom.segs          <- fun.add.chrom(seg.mat.patient[,position.cols],chrom.length.copy)
   seg.mat.plot        <- seg.mat.patient
-  seg.mat.plot[,2:4]  <- chrom.segs
-  major               <- seg.mat.plot$COPY_NUMBER_A
+  seg.mat.plot[,position.cols]  <- chrom.segs
+  major               <- seg.mat.plot$COPY_NUMBER_MAJOR
   seg.mat.plot        <- cbind(seg.mat.plot,major)
   
   
@@ -3921,7 +3913,7 @@ plot.simpleClusters.raw    <- function( seg.mat.patient
   
 
   mtext(side=3
-        ,at=fun.chrom.mean(seg.mat.plot[,2:4])
+        ,at=fun.chrom.mean(seg.mat.plot[,position.cols])
         ,text=sort(unique(seg.mat.plot[,2]))
         ,cex=seq(0.6,0.4,length.out=length(unique(seg.mat.plot[,2])))
         ,line=-1

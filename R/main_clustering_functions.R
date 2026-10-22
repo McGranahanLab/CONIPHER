@@ -51,6 +51,7 @@ conipher_clustering <- function(case_id,
         stop("Unable to find input_tsv.\n")
     }
     input_tsv     <- read.delim(input_tsv_loc, sep = "\t", stringsAsFactors = FALSE, header = TRUE, fill = TRUE, quote = "")
+    input_tsv     <- standardise_copy_number_columns(input_tsv)
     if (nrow(input_tsv) == 0) {
         stop('No mutations passed filtering, stopping PyClone phylo clustering')
     }
@@ -91,6 +92,7 @@ conipher_clustering <- function(case_id,
 #' @export clustering_preprocess
 
 clustering_preprocess <- function(input_table, new.dir, subclonal_copy_correction = TRUE, multiple_test_correction = TRUE, only_truncal_subclonal_copy_correction = TRUE, fix_absentCCFs = TRUE) {
+    input_table <- standardise_copy_number_columns(input_table)
     gender  <- "male"
     patient <- unique(input_table$CASE_ID)
     regions.to.use <- unique(input_table$SAMPLE)
@@ -164,13 +166,13 @@ clustering_preprocess <- function(input_table, new.dir, subclonal_copy_correctio
                                startpos = input_table[, "POS"],
                                endpos = input_table[, "POS"],
                                n.het = 1,
-                               cnTotal = round(input_table[, "COPY_NUMBER_A"] + input_table[, "COPY_NUMBER_B"]),
-                               nMajor = round(input_table[, "COPY_NUMBER_A"]),
-                               nMinor = round(input_table[, "COPY_NUMBER_B"]),
+                               cnTotal = round(input_table[, "COPY_NUMBER_MAJOR"] + input_table[, "COPY_NUMBER_MINOR"]),
+                               nMajor = round(input_table[, "COPY_NUMBER_MAJOR"]),
+                               nMinor = round(input_table[, "COPY_NUMBER_MINOR"]),
                                Ploidy = input_table[, "PLOIDY"],
                                ACF = input_table[, "ACF"],
-                               COPY_NUMBER_A = input_table[, "COPY_NUMBER_A"],
-                               COPY_NUMBER_B = input_table[, "COPY_NUMBER_B"], 
+                               COPY_NUMBER_MAJOR = input_table[, "COPY_NUMBER_MAJOR"],
+                               COPY_NUMBER_MINOR = input_table[, "COPY_NUMBER_MINOR"], 
                                stringsAsFactors = FALSE)
 
     mut.table    <- mut.table[mut.table$chr %in% 1:22,, drop = FALSE]
@@ -205,8 +207,8 @@ clustering_preprocess <- function(input_table, new.dir, subclonal_copy_correctio
 
     if (subclonal_copy_correction %in% "FALSE") {
         cat('\nRunning without subclonal copy number mode')
-        seg.mat.phylo$COPY_NUMBER_A <- seg.mat.phylo$nMajor
-        seg.mat.phylo$COPY_NUMBER_B <- seg.mat.phylo$nMinor
+        seg.mat.phylo$COPY_NUMBER_MAJOR <- seg.mat.phylo$nMajor
+        seg.mat.phylo$COPY_NUMBER_MINOR <- seg.mat.phylo$nMinor
         seg.mat.phylo$fracA <- 1
         seg.mat.phylo$fracB <- 0
         seg.mat.phylo$fracC <- NA
@@ -220,8 +222,8 @@ clustering_preprocess <- function(input_table, new.dir, subclonal_copy_correctio
         seg.mat.phylo$nMaj_D <- NA
         seg.mat.phylo$nMin_D <- NA
 
-        seg.mat.copy$COPY_NUMBER_A <- seg.mat.phylo$nMajor
-        seg.mat.copy$COPY_NUMBER_B <- seg.mat.phylo$nMinor
+        seg.mat.copy$COPY_NUMBER_MAJOR <- seg.mat.phylo$nMajor
+        seg.mat.copy$COPY_NUMBER_MINOR <- seg.mat.phylo$nMinor
     }
 
     patient.list       <- list()
@@ -648,8 +650,9 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                     print("Using specified seg file for plotting")
                     region.seg.copy     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = FALSE)
                     region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
-                    region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
-                    region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
+                    region.seg.copy     <- standardise_copy_number_columns(region.seg.copy)
+                    region.seg.copy$COPY_NUMBER_MAJOR <- as.numeric(region.seg.copy$COPY_NUMBER_MAJOR)
+                    region.seg.copy$COPY_NUMBER_MINOR <- as.numeric(region.seg.copy$COPY_NUMBER_MINOR)
                     region.seg.copy$CHR           <- as.numeric(region.seg.copy$CHR)
                     region.seg.copy$STARTPOS      <- as.numeric(region.seg.copy$STARTPOS)
                     
@@ -657,7 +660,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                     region.seg.copy <- region.seg.copy[order(region.seg.copy$CHR,
                                                              region.seg.copy$STARTPOS), ]
                     # If providing seg file, ensure the sample names match the sample names in input tsv
-                    if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
+                    if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy$SampleID))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
                     }
                     region.seg.copy <- region.seg.copy %>% dplyr::rename(SampleID = SAMPLE)
@@ -668,15 +671,11 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
 
                 region.seg.copy <- region.seg.copy %>% dplyr::filter(SampleID %in% region)
                 # ensure raw copy number columns are numeric:
-                region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
-                region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
+                region.seg.copy$COPY_NUMBER_MAJOR <- as.numeric(region.seg.copy$COPY_NUMBER_MAJOR)
+                region.seg.copy$COPY_NUMBER_MINOR <- as.numeric(region.seg.copy$COPY_NUMBER_MINOR)
 
                 # Rename columns
-                sub.mat.copy               <- region.seg.copy
-
-                colnames(sub.mat.copy)[2]  <- 'Chromosome'
-                colnames(sub.mat.copy)[3]  <- 'StartPosition'
-                colnames(sub.mat.copy)[4]  <- 'EndPosition'
+                sub.mat.copy               <- standardise_seg_position_columns(region.seg.copy)
 
                 #pdf(early.late.pdf)
                 par(mar = c(0.5, 5, 0.5, 0.2))
@@ -722,8 +721,9 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                     print("Using specified seg file for plotting")
                     region.seg.copy     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = FALSE)
                     region.seg.copy$SAMPLE <- gsub("-", "\\.", region.seg.copy$SAMPLE)
-                    region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
-                    region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
+                    region.seg.copy     <- standardise_copy_number_columns(region.seg.copy)
+                    region.seg.copy$COPY_NUMBER_MAJOR <- as.numeric(region.seg.copy$COPY_NUMBER_MAJOR)
+                    region.seg.copy$COPY_NUMBER_MINOR <- as.numeric(region.seg.copy$COPY_NUMBER_MINOR)
                     region.seg.copy$CHR           <- as.numeric(region.seg.copy$CHR)
                     region.seg.copy$STARTPOS      <- as.numeric(region.seg.copy$STARTPOS)
                     
@@ -731,7 +731,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                     region.seg.copy <- region.seg.copy[order(region.seg.copy$CHR,
                                                              region.seg.copy$STARTPOS), ]
                     # If providing seg file, ensure the sample names match the sample names in input tsv
-                    if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy[, 1]))) {
+                    if (!any(unique(region.seg.copy$SAMPLE) %in% unique(seg.mat.copy$SampleID))) {
                         stop('Sample IDs do not match between input_tsv and input_seg_tsv')
                     }
                     region.seg.copy <- region.seg.copy %>% dplyr::rename(SampleID = SAMPLE)
@@ -742,14 +742,11 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
 
                 region.seg.copy <- region.seg.copy %>% dplyr::filter(SampleID %in% region)
                 # ensure raw copy number columns are numeric:
-                region.seg.copy$COPY_NUMBER_A <- as.numeric(region.seg.copy$COPY_NUMBER_A)
-                region.seg.copy$COPY_NUMBER_B <- as.numeric(region.seg.copy$COPY_NUMBER_B)
+                region.seg.copy$COPY_NUMBER_MAJOR <- as.numeric(region.seg.copy$COPY_NUMBER_MAJOR)
+                region.seg.copy$COPY_NUMBER_MINOR <- as.numeric(region.seg.copy$COPY_NUMBER_MINOR)
 
                 # Rename columns:
-                sub.mat.copy               <- region.seg.copy
-                colnames(sub.mat.copy)[2]  <- 'Chromosome'
-                colnames(sub.mat.copy)[3]  <- 'StartPosition'
-                colnames(sub.mat.copy)[4]  <- 'EndPosition'
+                sub.mat.copy               <- standardise_seg_position_columns(region.seg.copy)
 
 
                 #pdf(early.late.pdf)
@@ -839,7 +836,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
         tmp <- tmp %>% 
             dplyr::select(mutation_id, region, Reference_Base, Alternate_Base, ref_counts, var_counts, phyloCCF, phyloCCF.0.05, phyloCCF.0.95, absolute.ccf, mutCopyNum, major_cn, minor_cn) %>%
             dplyr::mutate(mutation_id = unlist(mutation_id), ref_counts = unlist(ref_counts), var_counts = unlist(var_counts), minor_cn = unlist(minor_cn), major_cn = unlist(major_cn), region = unlist(region), Reference_Base = unlist(Reference_Base), Alternate_Base = unlist(Alternate_Base)) %>%
-            dplyr::rename(SAMPLE = region, REF = Reference_Base, ALT = Alternate_Base, REF_COUNT = ref_counts, VAR_COUNT = var_counts, CCF_PHYLO = phyloCCF, CCF_OBS = absolute.ccf, MUT_COPY = mutCopyNum, COPY_NUMBER_A = major_cn, COPY_NUMBER_B = minor_cn)
+            dplyr::rename(SAMPLE = region, REF = Reference_Base, ALT = Alternate_Base, REF_COUNT = ref_counts, VAR_COUNT = var_counts, CCF_PHYLO = phyloCCF, CCF_OBS = absolute.ccf, MUT_COPY = mutCopyNum, COPY_NUMBER_MAJOR = major_cn, COPY_NUMBER_MINOR = minor_cn)
         return(tmp)
     })
     output_tsv <- dplyr::bind_rows(tmp.phylo.region.list) 
@@ -853,7 +850,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
                       POS = as.numeric(sapply(strsplit(unlist(output_tsv$mutation_id), split = ":"), function(x) x[3])),
                       key = paste(paste0("chr", CHR), POS, REF, ALT, sep = ":")) %>%
         dplyr::left_join(input_tsv %>% dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, DEPTH, ACF, PLOIDY) %>% mutate(CHR = as.numeric(CHR), POS = as.numeric(POS)), by = c("CHR", "POS", "REF", "ALT", "SAMPLE")) %>%
-        dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, REF_COUNT, VAR_COUNT, DEPTH, CLUSTER, CCF_PHYLO, CCF_OBS, MUT_COPY, COPY_NUMBER_A, COPY_NUMBER_B, ACF, PLOIDY, CLEAN, phyloCCF.0.05, phyloCCF.0.95)
+        dplyr::select(CASE_ID, SAMPLE, CHR, POS, REF, ALT, REF_COUNT, VAR_COUNT, DEPTH, CLUSTER, CCF_PHYLO, CCF_OBS, MUT_COPY, COPY_NUMBER_MAJOR, COPY_NUMBER_MINOR, ACF, PLOIDY, CLEAN, phyloCCF.0.05, phyloCCF.0.95)
 
     write.table(output_tsv %>% dplyr::select(-phyloCCF.0.05, -phyloCCF.0.95), file = paste0(new.dir, patient, ".SCoutput.FULL.tsv"), row.names = FALSE, quote = FALSE, sep = "\t")
 
@@ -1004,8 +1001,9 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
         print("Using specified seg file for plotting")
         seg.mat.copy.plot     <- read.delim2(input_seg_tsv_loc, stringsAsFactors = F)
         seg.mat.copy.plot$SAMPLE <- gsub("-", "\\.", seg.mat.copy.plot$SAMPLE)
-        seg.mat.copy.plot$COPY_NUMBER_A <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_A)
-        seg.mat.copy.plot$COPY_NUMBER_B <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_B)
+        seg.mat.copy.plot     <- standardise_copy_number_columns(seg.mat.copy.plot)
+        seg.mat.copy.plot$COPY_NUMBER_MAJOR <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_MAJOR)
+        seg.mat.copy.plot$COPY_NUMBER_MINOR <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_MINOR)
         seg.mat.copy.plot$CHR           <- as.numeric(seg.mat.copy.plot$CHR)
         seg.mat.copy.plot$STARTPOS      <- as.numeric(seg.mat.copy.plot$STARTPOS)
         
@@ -1013,7 +1011,7 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
         seg.mat.copy.plot <- seg.mat.copy.plot[order(seg.mat.copy.plot$CHR,
                                                      seg.mat.copy.plot$STARTPOS), ]
         # If providing seg file, ensure the sample names match the sample names in input tsv
-        if (!any(unique(seg.mat.copy.plot$SAMPLE) %in% unique(seg.mat.copy[,1]))) {
+        if (!any(unique(seg.mat.copy.plot$SAMPLE) %in% unique(seg.mat.copy$SampleID))) {
             stop('Sample IDs do not match between input_tsv and input_seg_tsv')
         }
     } else {
@@ -1021,9 +1019,9 @@ clustering_postprocess <- function(input_list, sample.results, new.dir, input_ts
         seg.mat.copy.plot <- seg.mat.copy
     }
 
-    # ensure COPY_NUMBER_A and COPY_NUMBER_B are numeric
-    seg.mat.copy.plot$COPY_NUMBER_A <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_A)
-    seg.mat.copy.plot$COPY_NUMBER_B <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_B)
+    # ensure COPY_NUMBER_MAJOR and COPY_NUMBER_MINOR are numeric
+    seg.mat.copy.plot$COPY_NUMBER_MAJOR <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_MAJOR)
+    seg.mat.copy.plot$COPY_NUMBER_MINOR <- as.numeric(seg.mat.copy.plot$COPY_NUMBER_MINOR)
 
     pdf(paste(new.dir,"/",patient,"_pyclone_cluster_assignment_copynumber_dirty",".pdf",sep=""), height = ifelse(length(regions.to.use) == 1, 5, length(regions.to.use)))
     plot.region.mutCopyNum(phylo.region.list = phylo.region.list,seg.mat.copy = seg.mat.copy.plot,mostLikelyClusters = most.likely.cluster,plot.separate.clusters = TRUE)

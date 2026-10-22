@@ -40,6 +40,7 @@ conipher_treebuilding <- function(input_tsv_loc,
         stop("Unable to find input_tsv.\n")
     }
     input_tsv     <- read.delim(input_tsv_loc, sep = "\t", stringsAsFactors = FALSE, header = TRUE, fill = TRUE, quote = "")
+    input_tsv     <- standardise_copy_number_columns(input_tsv)
     if (nrow(input_tsv) == 0) {
         stop('No mutations passed filtering, stopping PyClone phylo clustering')
     }
@@ -185,8 +186,10 @@ conipher_treebuilding <- function(input_tsv_loc,
 
 treebuilding_preprocess <- function(input_table, prefix, out_dir) {
   cat('\n Preprocessing input data \n')
+  # accept legacy COPY_NUMBER_A / COPY_NUMBER_B column names
+  input_table <- standardise_copy_number_columns(input_table)
   # check if the correct columns are included
-  required_cols <- c("CASE_ID", "SAMPLE", "CHR", "POS", "REF", "ALT", "CLUSTER", "CCF_PHYLO", "CCF_OBS", "MUT_COPY", "COPY_NUMBER_A", "COPY_NUMBER_B")
+  required_cols <- c("CASE_ID", "SAMPLE", "CHR", "POS", "REF", "ALT", "CLUSTER", "CCF_PHYLO", "CCF_OBS", "MUT_COPY", "COPY_NUMBER_MAJOR", "COPY_NUMBER_MINOR")
   if (FALSE%in% (required_cols %in% colnames(input_table)))
   {
     print('\nThe following columns are required in input_tsv:\n')
@@ -218,8 +221,8 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir) {
   input_table$CCF_PHYLO <- as.numeric(input_table$CCF_PHYLO)
   input_table$CCF_OBS <- as.numeric(input_table$CCF_OBS)
   input_table$MUT_COPY <- as.numeric(input_table$MUT_COPY)
-  input_table$COPY_NUMBER_A <- as.numeric(input_table$COPY_NUMBER_A)
-  input_table$COPY_NUMBER_B <- as.numeric(input_table$COPY_NUMBER_B)
+  input_table$COPY_NUMBER_MAJOR <- as.numeric(input_table$COPY_NUMBER_MAJOR)
+  input_table$COPY_NUMBER_MINOR <- as.numeric(input_table$COPY_NUMBER_MINOR)
   input_table$REF_COUNT <- as.numeric(input_table$REF_COUNT)
   input_table$VAR_COUNT <- as.numeric(input_table$VAR_COUNT)
   input_table$DEPTH <- as.numeric(input_table$DEPTH)
@@ -303,8 +306,8 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir) {
       input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_cpn.copies',sep="")] <- 1
 
       input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_mut.cpn.num',sep="")] <- region_spec_mut$MUT_COPY
-      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_nAraw',sep="")] <- region_spec_mut$COPY_NUMBER_A
-      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_nBraw',sep="")] <- region_spec_mut$COPY_NUMBER_B
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_nAraw',sep="")] <- region_spec_mut$COPY_NUMBER_MAJOR
+      input_format[mutation_id,paste(region_spec_mut$SAMPLE,'_nBraw',sep="")] <- region_spec_mut$COPY_NUMBER_MINOR
       input_format[mutation_id,"PycloneCluster"] <- region_spec_mut$CLUSTER
       input_format[mutation_id,"CleanCluster"]  <- 1
     }
@@ -349,8 +352,8 @@ treebuilding_preprocess <- function(input_table, prefix, out_dir) {
       input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_cpn.copies',sep="")] <- 1
 
       input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_mut.cpn.num',sep="")] <- region_spec_mut$MUT_COPY
-      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_nAraw',sep="")] <- region_spec_mut$COPY_NUMBER_A
-      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_nBraw',sep="")] <- region_spec_mut$COPY_NUMBER_B
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_nAraw',sep="")] <- region_spec_mut$COPY_NUMBER_MAJOR
+      input_format_absolute[mutation_id,paste(region_spec_mut$SAMPLE,'_nBraw',sep="")] <- region_spec_mut$COPY_NUMBER_MINOR
       input_format_absolute[mutation_id,"PycloneCluster"] <- region_spec_mut$CLUSTER
       input_format_absolute[mutation_id,"CleanCluster"]  <- 1
 
